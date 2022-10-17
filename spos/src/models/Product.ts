@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, OneToMany, JoinTable } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, OneToMany, JoinTable, BeforeInsert } from "typeorm"
+import { PricePointRepository } from "../repositories/PricePointRepository"
 import { PricePoint } from "./PricePoint"
 import { Transaction } from "./Transaction"
 
@@ -7,6 +8,9 @@ export class Product {
 
     @PrimaryGeneratedColumn()
     id: number
+
+    @Column()
+    name: string
 
     @Column()
     timestamp: Date
@@ -19,6 +23,15 @@ export class Product {
     transactions: Transaction[]
 
     @Column()
-    value: number
+    initial_value: number
+
+    @Column()
+    minimum_value: number
+
+    @BeforeInsert()
+    async setTimestamp() {
+        this.timestamp = new Date()
+    }
+
 
 }

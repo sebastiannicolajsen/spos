@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, ManyToOne } from 
 import * as bcrypt from "bcrypt"
 import { Transaction } from "./Transaction"
 
-export enum UserRole {
+export enum SellerRole {
     DEFAULT = "DEFAULT",
     ADMIN = "ADMIN",
 }
@@ -23,7 +23,7 @@ export class Seller {
     transactions: Transaction[]
 
     @Column()
-    role: UserRole = UserRole.DEFAULT
+    role: SellerRole = SellerRole.DEFAULT
 
 
     @BeforeInsert()
