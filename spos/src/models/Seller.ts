@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, ManyToOne } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, OneToMany } from "typeorm"
 import * as bcrypt from "bcrypt"
 import { Transaction } from "./Transaction"
 
@@ -19,7 +19,7 @@ export class Seller {
     @Column()
     password: string
 
-    @ManyToOne(() => Transaction, (t) => t.seller)
+    @OneToMany(() => Transaction, (t) => t.seller)
     transactions: Transaction[]
 
     @Column()

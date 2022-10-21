@@ -1,24 +1,35 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, ManyToOne, JoinTable } from "typeorm"
-import { Product } from "./Product"
-import { Transaction } from "./Transaction"
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToMany,
+  ManyToOne,
+  JoinTable,
+  BeforeInsert,
+} from 'typeorm';
+import { Product } from './Product';
+import { Transaction } from './Transaction';
 
 @Entity()
 export class PricePoint {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @PrimaryGeneratedColumn()
-    id: number
+  @Column()
+  timestamp: Date;
 
-    @Column()
-    timestamp: Date
+  @ManyToOne(() => Product, (p) => p.price_points)
+  product: Product;
 
-    @ManyToOne(() => Product, (p) => p.price_points)
-    product: Product
+  @ManyToMany(() => Transaction)
+  @JoinTable()
+  transactions: Transaction[];
 
-    @ManyToMany(() => Transaction)
-    @JoinTable()
-    transactions: Transaction[]
+  @Column({ type: 'decimal', precision: 7, scale: 2, default: 0.0 })
+  value: number;
 
-    @Column()
-    value: number
-
+  @BeforeInsert()
+  beforeInsert() {
+    this.timestamp = new Date();
+  }
 }

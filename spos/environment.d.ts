@@ -1,5 +1,3 @@
-import { DataSourceOptions } from "typeorm";
-import { MysqlConnectionOptions } from "typeorm/driver/mysql/MysqlConnectionOptions";
 
 declare global {
     namespace NodeJS {
@@ -12,6 +10,7 @@ declare global {
             DATABASE_NAME: string;
             DATABASE_PASSWORD: string;
             JWT_SECRET: string;
+            REDIS_HOST: string;
         }
     }
 }
