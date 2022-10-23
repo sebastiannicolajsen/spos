@@ -10,13 +10,14 @@ import {
 import * as _ from 'lodash';
 import { AuthServiceEvents } from './AuthService';
 import { SellerServiceEvents } from './SellerService';
-import SubscriberService, {
+import {
   SubscriberServiceEvents,
 } from './SubscriberService';
 import { CronServiceEvents } from './CronService';
 import PricePointServiceEvents from './PricePointService';
 import { ProductServiceEvents } from './ProductService';
 import { TransactionServiceEvents } from './TransactionService';
+import BaseService from './BaseService';
 
 export const StaticEvents = [
   ..._.values(AuthServiceEvents),
@@ -31,13 +32,14 @@ export const StaticEvents = [
 
 
 @Service()
-class EventService {
+class EventService{
   constructor(
     @Inject(CronJobRepositoryId)
     private readonly cronJobRepository: typeof CronJobRepository,
     @Inject(SubscriberRepositoryId)
     private readonly subscriberRepository: typeof SubscriberRepository
-  ) {}
+  ) {
+  }
 
   async getEvents() {
     const cronTriggers = await this.cronJobRepository.find();
