@@ -21,21 +21,19 @@ class AuthService extends BaseService {
   }
 
   async validate(username: string, password: string): Promise<boolean> {
-    return await this.error(
-      async () => {
-        const user = await this.sellerService.get(username);
+    return await this.error(async () => {
+      const user = await this.sellerService.get(username);
 
-        if (!user) return Promise.resolve(false);
+      if (!user) return Promise.resolve(false);
 
-        const isValid = await bcrypt.compare(password, user.password);
+      const isValid = await bcrypt.compare(password, user.password);
 
-        await this.eventBusService.emit(AuthServiceEvents.VALIDATE, {
-          username,
-          isValid,
-        });
-        return isValid;
-      }
-    );
+      await this.eventBusService.emit(AuthServiceEvents.VALIDATE, {
+        username,
+        isValid,
+      });
+      return isValid;
+    });
   }
 }
 

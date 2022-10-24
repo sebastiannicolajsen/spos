@@ -50,6 +50,12 @@ class SubscriberService extends BaseService {
     });
   }
 
+  async get(): Promise<Subscriber[]> {
+    return await this.error(async () => {
+      return this.subscriberRepository.find();
+    })
+  }
+
   async validate(
     id: string,
     objects: string[],
