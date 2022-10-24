@@ -19,4 +19,4 @@ To run test (creates local sqlite db and in memory redis):
 `npm run test`
 
 Overview of spos backend:
-<img src="./img/spos-overview.png" width="100" height="100">
+<img src="./img/spos-overview.png" width="300" >
