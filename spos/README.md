@@ -10,7 +10,13 @@ To run make sure that;
 To then run, you may:
 1. Apply migrations - `npm run migration:run` 
 2. Seed database with default users (admin and non admin) - `npm run seeding` (optional)
-3. npm start to run the project - served on localhost:3000.
+3. npm start to run the project - API served on localhost:3000, logging dashboard on localhost:8000.
 
 To produce new migrations:
 `npm run migration:generate --name=<name>`
+
+To run test (creates local sqlite db and in memory redis):
+`npm run test`
+
+Overview of spos-backend:
+![spos-bacekdn](./img/spos-overview.png)
