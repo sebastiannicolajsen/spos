@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { jwtAuth } from '../../middleware/jwt';
+import { jwtAuth } from '../../middleware';
 
 const router = express.Router();
 

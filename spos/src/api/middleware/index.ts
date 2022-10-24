@@ -5,6 +5,7 @@ import AuthService from '../../services/AuthService';
 import SellerService from '../../services/SellerService';
 import * as _ from 'lodash';
 import { Container } from 'typedi';
+import { SellerRole } from '../../models/Seller';
 
 passport.use(
   'local',
@@ -19,8 +20,8 @@ passport.use(
         password
       );
       if (valid) {
-        const user = await Container.get(SellerService).get(username);
-        return cb(null, _.omit(user, ['password']), {
+        const user = await Container.get(SellerService).find(username);
+        return cb(null, user, {
           message: 'Logged In Successfully',
         });
       } else {
@@ -40,7 +41,7 @@ passport.use(
     },
     async (req, jwtPayLoad, cb) => {
       try {
-        const user = await Container.get(SellerService).get(
+        const user = await Container.get(SellerService).find(
           jwtPayLoad.username
         );
         if (!user) return cb('User must be logged In', false);
@@ -53,3 +54,15 @@ passport.use(
     }
   )
 );
+
+const isAdmin = (req, res, next) => {
+  if (req.user.role === SellerRole.ADMIN) {
+    next();
+  } else {
+    res.status(401).json({ message: 'Unauthorized role' });
+  }
+}
+
+
+export const jwtAuth = passport.authenticate('jwt', { session: false });
+export const adminAuth = [jwtAuth, isAdmin]

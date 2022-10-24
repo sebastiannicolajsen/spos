@@ -3,7 +3,6 @@ import api from '../../utils/api';
 import functions from '../../utils/test-helpers/functions';
 
 describe('/auth/login', () => {
-
   beforeAll(async () => {
     await functions.setup([sellers]);
   });
@@ -13,17 +12,12 @@ describe('/auth/login', () => {
   });
 
   it('Log in to correct user', async () => {
-    const login = await api.client.post('/auth/login', {
-        username: 'admin',
-        password: 'supersecret',
-    });
-
-    const result = await api.client.get('/whoami', {
-      headers: {
-        Authorization: `Bearer ${login.data.token}`,
-      },
-    });
+    const result = await api.authAdmin('get', '/whoami');
 
     expect(result.data.user.username).toBe('admin');
+  });
+
+  it('Fails to execute admin priviliged call', async () => {
+    api.expectError(async () => api.authDefault('get', '/subscriber'));
   });
 });

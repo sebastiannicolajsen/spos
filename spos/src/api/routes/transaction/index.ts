@@ -1,7 +1,7 @@
 import { body, param, validationResult } from 'express-validator';
 import * as express from 'express';
 import Container from 'typedi';
-import { jwtAuth } from '../../middleware/jwt';
+import { jwtAuth } from '../../middleware';
 import TransactionService from '../../../services/TransactionService';
 
 const router = express.Router();

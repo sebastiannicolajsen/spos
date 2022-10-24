@@ -7,6 +7,11 @@ export default class Logger extends Subscriber {
   constructor() {
     super();
 
+    if(process.env.NODE_ENV === 'test') {
+      this.logger = { log: (_1, _2, _3) => {} } as winston.Logger;
+      return;
+    }
+
     const loggers = [];
     if (process.env.LOG_TYPE === 'console') {
       loggers.push(new winston.transports.Console());
@@ -21,7 +26,7 @@ export default class Logger extends Subscriber {
           maxFiles: '14d',
         })
       );
-
+      
       loggers.push(
         new winston.transports.DailyRotateFile({
             filename: './logs/main-%DATE%.log',

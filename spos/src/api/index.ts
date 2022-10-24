@@ -31,9 +31,10 @@ export default (): Server => {
   router.use('/transaction', require('./routes/transaction').default);
   router.use('/subscriber', require('./routes/subscriber').default);
   router.use('/cron', require('./routes/cron').default);
+  router.use('/seller', require('./routes/seller').default);
 
   // setup event logging dashboard:
-  log();
+  if(process.env.NODE_ENV !== 'test') log();
 
   /* Error handler middleware */
   router.use((err, req, res, next) => {

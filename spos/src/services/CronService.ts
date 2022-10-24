@@ -82,7 +82,7 @@ class CronService extends BaseService {
     });
   }
 
-  async remove(id: string) : Promise<boolean> {
+  async delete(id: string) : Promise<boolean> {
     return await this.error(async () => {
       const job = await this.find(id);
       if (!job) return false;

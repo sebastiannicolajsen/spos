@@ -51,7 +51,7 @@ const buildRequest = (path: string, body: {}) => {
       },
     };
   }
-  req = { path, ...req, ...body };
+  req = { url: path, ...req, data: body };
   return req;
 };
 

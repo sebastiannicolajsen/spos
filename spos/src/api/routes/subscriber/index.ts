@@ -2,11 +2,11 @@ import * as express from 'express';
 import { body, param, validationResult } from 'express-validator';
 import Container from 'typedi';
 import SubscriberService from '../../../services/SubscriberService';
-import { jwtAuth } from '../../middleware/jwt';
+import { adminAuth, jwtAuth } from '../../middleware';
 
 const router = express.Router();
 
-router.get('/', jwtAuth, async (req, res) => {
+router.get('/', adminAuth, async (req, res) => {
   const subscriberService = Container.get(SubscriberService);
   const result = await subscriberService.get();
   return res.json({
@@ -14,34 +14,50 @@ router.get('/', jwtAuth, async (req, res) => {
   });
 });
 
-router.get('/:id', param('id').isString(), jwtAuth, async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+router.get(
+  '/:id',
+  param('id').isString(),
+  jwtAuth,
+  adminAuth,
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const subscriberService = Container.get(SubscriberService);
+    const result = await subscriberService.find(req.params.id);
+    if (!result)
+      return res
+        .status(400)
+        .json({ errors: [{ msg: 'Subscriber not found' }] });
+    return res.json({
+      subscriber: result,
+    });
   }
-  const subscriberService = Container.get(SubscriberService);
-  const result = await subscriberService.find(req.params.id);
-  if (!result)
-    return res.status(400).json({ errors: [{ msg: 'Subscriber not found' }] });
-  return res.json({
-    subscriber: result,
-  });
-});
+);
 
-router.delete('/:id', param('id').isString(), jwtAuth, async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+router.delete(
+  '/:id',
+  param('id').isString(),
+  jwtAuth,
+  adminAuth,
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const subscriberService = Container.get(SubscriberService);
+    const result = await subscriberService.delete(req.params.id);
+    if (!result)
+      return res
+        .status(400)
+        .json({ errors: [{ msg: 'Subscriber not found' }] });
+    return res.json({
+      success: true,
+    });
   }
-
-  const subscriberService = Container.get(SubscriberService);
-  const result = await subscriberService.delete(req.params.id);
-  if (!result)
-    return res.status(400).json({ errors: [{ msg: 'Subscriber not found' }] });
-  return res.json({
-    success: true,
-  });
-});
+);
 
 router.post(
   '/',
@@ -50,6 +66,7 @@ router.post(
   body('objects').isArray(),
   body('code').isString(),
   jwtAuth,
+  adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -78,6 +95,7 @@ router.post(
   body('objects').isArray(),
   body('code').isString(),
   jwtAuth,
+  adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

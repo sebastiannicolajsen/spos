@@ -1,3 +1,4 @@
+import _ = require('lodash');
 import { Inject, Service } from 'typedi';
 import { Seller, SellerRole } from '../models/Seller';
 import {
@@ -26,7 +27,11 @@ class SellerService extends BaseService {
     super(eventBusService, SellerServiceEvents.FAIL);
   }
 
-  async get(username: string): Promise<Seller> {
+  async find(username: string): Promise<Seller> {
+    return _.omit(await this.findUnsafe(username), ['password']) as Seller;
+  }
+
+  async findUnsafe(username: string): Promise<Seller> {
     return await this.error(async () => {
       const user = await this.sellerRepository.findOne({ where: { username } });
       if (!user) return null;
@@ -35,13 +40,13 @@ class SellerService extends BaseService {
     });
   }
 
-  async all(): Promise<Seller[]> {
+  async get(): Promise<Seller[]> {
     return await this.error(async () => {
-      return this.sellerRepository.find();
+      return (await this.sellerRepository.find()).map((u) => _.omit(u, ['password']));
     });
   }
 
-  async delete(username: string): Promise<void> {
+  async delete(username: string): Promise<boolean> {
     return await this.error(async () => {
       const user = await this.sellerRepository.findOne({
         where: {
@@ -50,13 +55,14 @@ class SellerService extends BaseService {
       });
 
       if (!user) {
-        return Promise.resolve();
+        return false;
       }
 
       await this.sellerRepository.delete(user.id);
       await this.eventBusService.emit(SellerServiceEvents.DELETED, {
         username: user.username,
       });
+      return true;
     });
   }
 
@@ -83,7 +89,7 @@ class SellerService extends BaseService {
         username: user.username,
       });
 
-      return user;
+      return _.omit(user, ['password']);
     });
   }
 
@@ -100,7 +106,7 @@ class SellerService extends BaseService {
         username: user.username,
       });
 
-      return user;
+      return _.omit(user, ['password']);
     });
   }
 }
