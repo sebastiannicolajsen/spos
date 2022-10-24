@@ -7,7 +7,7 @@ import subscribers from './subscribers';
 AppDataSource.initialize()
   .then(async () => {
     await subscribers();
-    await api();
+    await api(); 
   })
   .catch((error) => {
     console.log(error);

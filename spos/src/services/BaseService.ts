@@ -9,7 +9,8 @@ export default abstract class BaseService {
 
   async error<T>(fn: Function) : Promise<T> {
       try {
-          return fn();
+          const res = await fn();
+          return res;
       } catch(e){
           await this.eventBusService_.emit(this.fail, e);
           return null;

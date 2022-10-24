@@ -13,7 +13,7 @@ export default class Logger extends Subscriber {
     } else if (process.env.LOG_TYPE === 'file') {
       loggers.push(
         new winston.transports.DailyRotateFile({
-          filename: './logs/error-%DATE%.log',
+          filename: './logs/main-%DATE%.log',
           datePattern: 'YYYY-MM-DD',
           level: 'error',
           zippedArchive: true,
@@ -24,7 +24,7 @@ export default class Logger extends Subscriber {
 
       loggers.push(
         new winston.transports.DailyRotateFile({
-            filename: './logs/info-%DATE%.log',
+            filename: './logs/main-%DATE%.log',
             datePattern: 'YYYY-MM-DD',
             level: 'info',
             zippedArchive: true,
@@ -46,9 +46,9 @@ export default class Logger extends Subscriber {
   }
   handler(event: string, data: any): Promise<void> {
     if (event.includes('fail')) {
-      this.logger.log('error', {type: event, data});
+      this.logger.log('error', event, data);
     } else {
-      this.logger.log('info', {type: event, data});
+      this.logger.log('info', event, data);
     }
     return Promise.resolve();
   }
