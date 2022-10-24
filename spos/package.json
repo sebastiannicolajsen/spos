@@ -78,6 +78,7 @@
       "typeorm-typedi-extensions": "^0.4.1",
       "webassembly": "^0.11.0",
       "winston": "^3.8.2",
-      "winston-daily-rotate-file": "^4.7.1"
+      "winston-daily-rotate-file": "^4.7.1",
+      "winston-dashboard": "^1.0.12"
    }
 }

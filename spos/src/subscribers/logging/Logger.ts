@@ -24,7 +24,7 @@ export default class Logger extends Subscriber {
 
       loggers.push(
         new winston.transports.DailyRotateFile({
-            filename: './logs/combined-%DATE%.log',
+            filename: './logs/info-%DATE%.log',
             datePattern: 'YYYY-MM-DD',
             level: 'info',
             zippedArchive: true,

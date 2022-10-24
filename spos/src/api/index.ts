@@ -2,6 +2,7 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import './middleware';
 import { Server } from 'http';
+import log from './routes/logging';
 
 const app = express();
 const router = express.Router();
@@ -37,6 +38,9 @@ export default (): Server => {
   });
 
   app.use('/api', router);
+
+  // setup logging dashboard:
+  log();
 
   return app.listen(port, () => {
     console.log(`SPOS listening at http://localhost:${port}`);
