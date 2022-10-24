@@ -3,7 +3,7 @@ import { Inject, Service } from 'typedi';
 import { PricePoint } from '../models/PricePoint';
 import { Product } from '../models/Product';
 import { Seller } from '../models/Seller';
-import { Item, ShallowItem, Transaction } from '../models/Transaction';
+import { Item, Transaction } from '../models/Transaction';
 import {
   TransactionRepository,
   TransactionRepositoryId,
@@ -29,7 +29,7 @@ class TransactionService extends BaseService {
     super(eventBusService, TransactionServiceEvents.FAIL);
   }
 
-  async create(seller_id: number, items: ShallowItem[]) : Promise<Transaction> {
+  async create(seller_id: number, items: Item[]) : Promise<Transaction> {
     return await this.error(async () => {
       const transaction = new Transaction();
       transaction.seller = { id: seller_id } as Seller;

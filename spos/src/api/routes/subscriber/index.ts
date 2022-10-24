@@ -93,8 +93,8 @@ router.post(
       return res
         .status(400)
         .json({ errors: [{ msg: 'Something went wrong' }] });
-    return res.json({
-      subscriber: result,
+    return res.status(200).json({
+      valid: true,
     });
   }
 );

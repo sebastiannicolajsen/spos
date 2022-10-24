@@ -60,7 +60,7 @@ router.delete('/:id', param('id').isNumeric(), jwtAuth, async (req, res) => {
 
   const transactionService = Container.get(TransactionService);
   const transaction = await transactionService.delete(req.params.id);
-  res.status(200).json({ result: transaction });
+  res.status(200).json({ success: true });
 });
 
 export default router;

@@ -17,12 +17,6 @@ export type Item = {
   quantity: number;
 };
 
-export type ShallowItem = {
-  product_id: number;
-  price_point_id: number;
-  quantity: number;
-};
-
 @Entity()
 export class Transaction {
   @PrimaryGeneratedColumn()

@@ -96,7 +96,7 @@ router.delete('/:id', param('id').isInt(), jwtAuth, async (req, res) => {
   const product = await productService.delete(req.params.id);
   if (!product)
     return res.status(400).json({ errors: [{ msg: 'Product not found' }] });
-  res.status(200).json({ result: product });
+  res.status(200).json({ success: true });
 });
 
 router;
