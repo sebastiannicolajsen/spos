@@ -19,8 +19,13 @@ export enum CronServiceEvents {
   FAIL = 'cron.fail',
 }
 
+export type CronJobData = CronJob & {
+  status: boolean
+}
+
 class CronService extends BaseService {
   private readonly jobs: { [key: string]: cron } = {};
+  private readonly jobs_status: {[key: string]: boolean} = {};
 
   constructor(
     @Inject()
@@ -31,7 +36,14 @@ class CronService extends BaseService {
     super(eventBusService, CronServiceEvents.FAIL);
   }
 
-  async create(id: string, event: string, interval: string): Promise<CronJob> {
+  private wrap(job: CronJob): CronJobData {
+    return {
+      ...job,
+      status: this.jobs_status[job.id]
+    } 
+  }
+
+  async create(id: string, event: string, interval: string): Promise<CronJobData> {
     return await this.error(async () => {
       const job = new CronJob();
       job.id = id;
@@ -45,7 +57,7 @@ class CronService extends BaseService {
 
       await this.setupJob(job);
       await this.eventBusService.emit(CronServiceEvents.CREATE, job);
-      return job;
+      return this.wrap(job);
     });
   }
 
@@ -55,6 +67,7 @@ class CronService extends BaseService {
         await this.eventBusService.emit(job.event, job);
       });
       this.jobs[job.id] = actual;
+      this.jobs_status[job.id] = true;
       actual.start();
       return true;
     });
@@ -72,7 +85,7 @@ class CronService extends BaseService {
   async remove(id: string) : Promise<boolean> {
     return await this.error(async () => {
       const job = await this.find(id);
-      if (!job) return;
+      if (!job) return false;
       this.jobs[id].stop();
       await this.cronJobRepository.delete(job.id);
       const res = delete this.jobs[id];
@@ -83,6 +96,8 @@ class CronService extends BaseService {
 
   async pause(id: string) : Promise<boolean> {
     return await this.error(async () => {
+      if (!this.jobs[id]) return false;
+      if(!this.jobs_status[id]) return false;
       this.jobs[id].stop();
       await this.eventBusService.emit(CronServiceEvents.STOP, { id });
       return true;
@@ -91,21 +106,35 @@ class CronService extends BaseService {
 
   async restart(id: string) : Promise<boolean> {
     return await this.error(async () => {
+      if (!this.jobs[id]) return false;
+      if(this.jobs_status[id]) return false;
       this.jobs[id].start();
       await this.eventBusService.emit(CronServiceEvents.START, { id });
       return true;
     });
   }
 
-  async get(): Promise<CronJob[]> {
+  async update(id: string, toUpdate = {event: null, interval: null} ){
     return await this.error(async () => {
-      return this.cronJobRepository.find();
+      const job = await this.find(id);
+      if (!job) return;
+      if (toUpdate.event) job.event = toUpdate.event;
+      if (toUpdate.interval) job.interval = toUpdate.interval;
+      await this.cronJobRepository.save(job);
+      await this.eventBusService.emit(CronServiceEvents.UPDATE, job);
+      return job;
     });
   }
 
-  async find(id: string): Promise<CronJob> {
+  async get(): Promise<CronJobData[]> {
     return await this.error(async () => {
-      return this.cronJobRepository.findOne({ where: { id } });
+      return (await this.cronJobRepository.find()).map(this.wrap);
+    });
+  }
+
+  async find(id: string): Promise<CronJobData> {
+    return await this.error(async () => {
+      return this.wrap(await this.cronJobRepository.findOne({ where: { id } }));
     });
   }
 

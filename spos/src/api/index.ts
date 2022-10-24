@@ -23,11 +23,17 @@ export default (): Server => {
     res.json({ message: 'ok' });
   });
 
+  // default paths:
   router.use('/auth', require('./routes/auth').default);
   router.use('/whoami', require('./routes/identity').default);
   router.use('/product', require('./routes/product').default);
   router.use('/pricepoint', require('./routes/pricepoint').default);
   router.use('/transaction', require('./routes/transaction').default);
+  router.use('/subscriber', require('./routes/subscriber').default);
+  router.use('/cron', require('./routes/cron').default);
+
+  // setup event logging dashboard:
+  log();
 
   /* Error handler middleware */
   router.use((err, req, res, next) => {
@@ -39,8 +45,7 @@ export default (): Server => {
 
   app.use('/api', router);
 
-  // setup logging dashboard:
-  log();
+  
 
   return app.listen(port, () => {
     console.log(`SPOS listening at http://localhost:${port}`);
