@@ -56,11 +56,19 @@ router.post(
     );
 
     if (!product)
-      return res.status(400).json({ errors: [{ msg: 'Something went wrong' }] });
+      return res
+        .status(400)
+        .json({ errors: [{ msg: 'Something went wrong' }] });
 
-    const pricePoint = await pricePointService.create(product.id, initial_value);
+    const pricePoint = await pricePointService.create(
+      product.id,
+      initial_value
+    );
 
-    if (!pricePoint) return res.status(400).json({ errors: [{ msg: 'Something went wrong' }] });
+    if (!pricePoint)
+      return res
+        .status(400)
+        .json({ errors: [{ msg: 'Something went wrong' }] });
 
     const updated = await productService.find(product.id);
     res.status(200).json({ product: updated });

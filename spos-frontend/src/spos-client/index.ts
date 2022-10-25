@@ -266,6 +266,24 @@ const api = {
       const res = await execReq("POST", `/cron/${id}/start`, {});
       return res?.success ?? false;
     },
+    seller: {
+      list: async (): Promise<Seller[]> => {
+        const res = await execReq("GET", "/seller", {});
+        return res?.sellers;
+      },
+      find: async (username: string): Promise<Seller> => {
+        const res = await execReq("GET", `/seller/${username}`, {});
+        return res?.seller;
+      },
+      delete: async (username: string): Promise<boolean> => {
+        const res = await execReq("DELETE", `/seller/${username}`, {});
+        return res?.succes;
+      },
+      create: async (username: string, password: string): Promise<Seller> => {
+        const res = await execReq("POST", "/seller", { username, password });
+        return res?.seller;
+      }
+    },
   },
 };
 

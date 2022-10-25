@@ -37,13 +37,7 @@ router.get(
   }
 );
 
-router.get('/last-execution', async (req, res) => {
-  const subscriberService = Container.get(SubscriberService);
-  const result = await subscriberService.getLastExecution();
-  return res.json({
-    last_execution: result,
-  });
-})
+
 
 router.delete(
   '/:id',
