@@ -1,5 +1,18 @@
 import axios, { AxiosInstance } from "axios";
-import { AuthData, CronJobData, ItemShallow, Product, Seller, SellerRole, Subscriber, Transaction } from "./types";
+import axiosRetry from "axios-retry";
+import { useEffect, useRef, useState } from "react";
+import {
+  AuthData,
+  CronJobData,
+  ItemShallow,
+  Product,
+  Seller,
+  SellerRole,
+  Subscriber,
+  Transaction,
+} from "./types";
+
+const RETRY_TIMEOUT = 5000;
 
 type State = {
   seller: Seller;
@@ -17,8 +30,10 @@ const state_: State = {
 };
 
 const client_: AxiosInstance = axios.create({
-  baseURL: `${process.env.API_URL}/api`,
+  baseURL: `${process.env.REACT_APP_API_URL}/api`,
 });
+
+axiosRetry(client_, { retries: 5 });
 
 const fetchFromStorage = () => {
   const jwt = localStorage.getItem(JWT_TOKEN);
@@ -37,10 +52,10 @@ const saveToStorage = () => {
 };
 
 const updateState = (data: AuthData) => {
-    state_.jwt = data.token;
-    state_.seller = data.user;
-    saveToStorage();
-}
+  state_.jwt = data.token;
+  state_.seller = data.user;
+  saveToStorage();
+};
 
 const buildRequest = (path: string, body: {}) => {
   let req = {};
@@ -57,7 +72,7 @@ const buildRequest = (path: string, body: {}) => {
 
 const execReq = async (method: string, path: string, body: {}) => {
   try {
-    const req = buildRequest(path, { method, data: body });
+    const req = buildRequest(path, { method, ...body });
     const res = await client_.request(req);
     return res.data;
   } catch (e) {
@@ -66,10 +81,34 @@ const execReq = async (method: string, path: string, body: {}) => {
   return null;
 };
 
+const useProducts = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const initLoad = useRef(true);
+  if (initLoad.current) {
+    initLoad.current = false;
+    api.products.list().then((data) => setProducts(data));
+  }
+  const last = useRef(new Date(0));
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const newest = await api.lastExecution();
+      console.log("fetched newest", newest);
+      if (newest && newest > last.current) {
+        last.current = newest;
+        console.log("updating pricing");
+        setProducts(await api.products.list());
+      }
+    }, RETRY_TIMEOUT);
+    return () => clearInterval(interval);
+  }, []);
+
+  return products;
+};
+
 const api = {
   user: {
-    role: () : SellerRole => {
-        return state_.seller.role;
+    role: (): SellerRole => {
+      return state_.seller.role;
     },
   },
   auth: {
@@ -79,113 +118,157 @@ const api = {
       return res.user;
     },
     whoami: async (): Promise<Seller> => {
-        const res = await execReq("GET", "/auth/whoami", {});
-        return res.user;
-    }
+      const res = await execReq("GET", "/auth/whoami", {});
+      return res.user;
+    },
   },
   products: {
+    useProducts,
     list: async (): Promise<Product[]> => {
-        const res = await execReq("GET", "/product", {});
-        return res.products;
+      const res = await execReq("GET", "/product", {});
+      return res?.products;
     },
     find: async (id: number): Promise<Product> => {
-        const res = await execReq("GET", `/product/${id}`, {});
-        return res?.product;
+      const res = await execReq("GET", `/product/${id}`, {});
+      return res?.product;
     },
-    create: async (name: string, initialValue: number, minimumValue: number): Promise<Product> => {
-        const res = await execReq("POST", "/product", { name, initial_value: initialValue, minimum_value: minimumValue });
-        return res?.product;
+    create: async (
+      name: string,
+      initialValue: number,
+      minimumValue: number
+    ): Promise<Product> => {
+      const res = await execReq("POST", "/product", {
+        name,
+        initial_value: initialValue,
+        minimum_value: minimumValue,
+      });
+      return res?.product;
     },
-    update: async (id: number, toUpdate = { name: null, initialValue: null, minimumValue: null }): Promise<Product> => {
-        const res = await execReq("PUT", `/product/${id}`, toUpdate);
-        return res?.product;
+    update: async (
+      id: number,
+      toUpdate = { name: null, initialValue: null, minimumValue: null }
+    ): Promise<Product> => {
+      const res = await execReq("PUT", `/product/${id}`, toUpdate);
+      return res?.product;
     },
     delete: async (id: number): Promise<Product> => {
-        const res = await execReq("DELETE", `/product/${id}`, {});
-        return res?.success ?? false;
-    }
+      const res = await execReq("DELETE", `/product/${id}`, {});
+      return res?.success ?? false;
+    },
   },
   price_points: {
     create: async (productId: number, value: number): Promise<Product> => {
-        const res = await execReq("POST", `/price_point`, {
-            product_id: productId,
-            value
-        });
-        return res?.product;
+      const res = await execReq("POST", `/price_point`, {
+        product_id: productId,
+        value,
+      });
+      return res?.product;
     },
     reset: async (productId: number): Promise<Product> => {
-        const res = await execReq("DELETE", `/price_point/${productId}/reset`, {});
-        return res?.product;
-    }
+      const res = await execReq(
+        "DELETE",
+        `/price_point/${productId}/reset`,
+        {}
+      );
+      return res?.product;
+    },
   },
   transactions: {
     list: async (): Promise<Transaction[]> => {
-        const res = await execReq("GET", "/transaction", {});
-        return res.transactions;
+      const res = await execReq("GET", "/transaction", {});
+      return res.transactions;
     },
     find: async (id: number): Promise<Transaction> => {
-        const res = await execReq("GET", `/transaction/${id}`, {});
-        return res?.transaction;
+      const res = await execReq("GET", `/transaction/${id}`, {});
+      return res?.transaction;
     },
     delete: async (id: number): Promise<Transaction> => {
-        const res = await execReq("DELETE", `/transaction/${id}`, {});
-        return res?.success ?? false;
+      const res = await execReq("DELETE", `/transaction/${id}`, {});
+      return res?.success ?? false;
     },
     create: async (items: ItemShallow): Promise<Transaction> => {
-        const res = await execReq("POST", "/transaction", { items });
-        return res?.transaction;
-    }
+      const res = await execReq("POST", "/transaction", { items });
+      return res?.transaction;
+    },
   },
   subscriber: {
-    list: async () : Promise<Subscriber[]> => {
-        const res = await execReq("GET", "/subscriber", {});
-        return res?.subscribers;
+    list: async (): Promise<Subscriber[]> => {
+      const res = await execReq("GET", "/subscriber", {});
+      return res?.subscribers;
     },
-    find: async (id: number) : Promise<Subscriber> => {
-        const res = await execReq("GET", `/subscriber/${id}`, {});
-        return res?.subscriber;
+    find: async (id: number): Promise<Subscriber> => {
+      const res = await execReq("GET", `/subscriber/${id}`, {});
+      return res?.subscriber;
     },
-    delete: async (id: number) : Promise<boolean> => {
-        const res = await execReq("DELETE", `/subscriber/${id}`, {});
-        return res?.success;
+    delete: async (id: number): Promise<boolean> => {
+      const res = await execReq("DELETE", `/subscriber/${id}`, {});
+      return res?.success;
     },
-    create: async (id: string, events: string[], objects: string[], code: string) : Promise<Subscriber> => {
-        const res = await execReq("POST", "/subscriber", { id, events, objects, code });
-        return res?.subscriber;
+    create: async (
+      id: string,
+      events: string[],
+      objects: string[],
+      code: string
+    ): Promise<Subscriber> => {
+      const res = await execReq("POST", "/subscriber", {
+        id,
+        events,
+        objects,
+        code,
+      });
+      return res?.subscriber;
     },
-    validate: async (id: string, events: string[], objects: string[], code: string) : Promise<boolean> => {
-        const res = await execReq("POST", "/subscriber/validate", { id, events, objects, code });
-        return res?.valid ?? false;
-    }
+    validate: async (
+      id: string,
+      events: string[],
+      objects: string[],
+      code: string
+    ): Promise<boolean> => {
+      const res = await execReq("POST", "/subscriber/validate", {
+        id,
+        events,
+        objects,
+        code,
+      });
+      return res?.valid ?? false;
+    },
+  },
+  lastExecution: async (): Promise<Date> => {
+    const res = await execReq("GET", "/last_execution", {});
+    return res?.last_execution;
   },
   cron: {
-    list: async () : Promise<CronJobData[]> => {
-        const res = await execReq("GET", "/cron", {});
-        return res?.jobs;
+    list: async (): Promise<CronJobData[]> => {
+      const res = await execReq("GET", "/cron", {});
+      return res?.jobs;
     },
-    find: async (id: string) : Promise<CronJobData> => {
-        const res = await execReq("GET", `/cron/${id}`, {});
-        return res?.job;
+    find: async (id: string): Promise<CronJobData> => {
+      const res = await execReq("GET", `/cron/${id}`, {});
+      return res?.job;
     },
-    delete: async (id: string) : Promise<boolean> => {
-        const res = await execReq("DELETE", `/cron/${id}`, {});
-        return res?.success ?? false;
+    delete: async (id: string): Promise<boolean> => {
+      const res = await execReq("DELETE", `/cron/${id}`, {});
+      return res?.success ?? false;
     },
-    create: async (id: string, event: string, interval: string) : Promise<CronJobData> => {
-        const res = await execReq("POST", "/cron", { id, event, interval });
-        return res?.job;
+    create: async (
+      id: string,
+      event: string,
+      interval: string
+    ): Promise<CronJobData> => {
+      const res = await execReq("POST", "/cron", { id, event, interval });
+      return res?.job;
     },
-    pause: async (id: string) : Promise<boolean> => {
-        const res = await execReq("POST", `/cron/${id}/pause`, {});
-        return res?.success ?? false;
+    pause: async (id: string): Promise<boolean> => {
+      const res = await execReq("POST", `/cron/${id}/pause`, {});
+      return res?.success ?? false;
     },
-    start: async (id: string) : Promise<boolean> => {
-        const res = await execReq("POST", `/cron/${id}/start`, {});
-        return res?.success ?? false;
-    }
-  }
+    start: async (id: string): Promise<boolean> => {
+      const res = await execReq("POST", `/cron/${id}/start`, {});
+      return res?.success ?? false;
+    },
+  },
 };
 
-export default api
+export default api;
 
 fetchFromStorage();

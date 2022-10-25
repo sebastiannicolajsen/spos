@@ -19,6 +19,7 @@ export enum SubscriberServiceEvents {
   CREATE = 'subscriber.create',
   UPDATE = 'subscriber.update',
   DELETE = 'subscriber.delete',
+  TRIGGER = 'subscriber.trigger',
   VALIDATE = 'subscriber.validate',
   ERROR = 'subscriber.error',
   FAIL = 'subscriber.fail',
@@ -31,6 +32,9 @@ export type ValidationEvent = {
 
 @Service()
 class SubscriberService extends BaseService {
+
+  private static last_execution = new Date();
+
   constructor(
     @Inject()
     private readonly eventBusService: EventBusService,
@@ -54,6 +58,10 @@ class SubscriberService extends BaseService {
     return await this.error(async () => {
       return this.subscriberRepository.find();
     })
+  }
+
+  getLastExecution(): Date {
+    return SubscriberService.last_execution;
   }
 
   async validate(
@@ -132,6 +140,8 @@ class SubscriberService extends BaseService {
         for (const [id, price] of Object.entries(pricePoints)) {
           await this.pricePointService.create(parseInt(id), price);
         }
+        await this.eventBusService.emit(SubscriberServiceEvents.TRIGGER, {subscriber})
+        SubscriberService.last_execution = new Date();
       };
 
       const genFun = await fun(importFromStringSync(subscriber.code));

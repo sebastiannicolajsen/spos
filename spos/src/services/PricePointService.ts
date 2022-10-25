@@ -33,7 +33,7 @@ class PricePointService extends BaseService {
       const product = await this.productService.find(product_id, []);
       if (!product) return;
       const pricePoint = new PricePoint();
-      pricePoint.value = value;
+      pricePoint.value = value >= product.minimum_value ? value : product.minimum_value;
       const result = await this.pricePointRepository.create(pricePoint);
       result.product = product;
       await this.pricePointRepository.save(result);

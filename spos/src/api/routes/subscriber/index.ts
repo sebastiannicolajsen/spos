@@ -4,6 +4,7 @@ import Container from 'typedi';
 import SubscriberService from '../../../services/SubscriberService';
 import { adminAuth, jwtAuth } from '../../middleware';
 
+
 const router = express.Router();
 
 router.get('/', adminAuth, async (req, res) => {
@@ -35,6 +36,14 @@ router.get(
     });
   }
 );
+
+router.get('/last-execution', async (req, res) => {
+  const subscriberService = Container.get(SubscriberService);
+  const result = await subscriberService.getLastExecution();
+  return res.json({
+    last_execution: result,
+  });
+})
 
 router.delete(
   '/:id',

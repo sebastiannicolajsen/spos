@@ -1,26 +1,18 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-import api from './spos-client';
-
+import React, { useState } from "react";
+import logo from "./logo.svg";
+import "./App.css";
+import api from "./spos-client";
 
 function App() {
+  const products = api.products.useProducts();
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      {products.map((product) => (
+        <>
+          {product.id} | {product.name} | {product.price_points.values}kr <br/>
+        </>
+      ))}
     </div>
   );
 }

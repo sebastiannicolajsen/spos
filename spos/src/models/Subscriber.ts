@@ -11,9 +11,6 @@ export class Subscriber {
   @PrimaryColumn()
   id: string;
 
-  @Column()
-  javascript: string;
-
   events: string[];
 
   @Column()

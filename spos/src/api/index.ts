@@ -3,6 +3,7 @@ import * as bodyParser from 'body-parser';
 import './middleware';
 import { Server } from 'http';
 import log from './routes/logging';
+import cors = require('cors');
 
 const app = express();
 const router = express.Router();
@@ -18,6 +19,8 @@ export default (): Server => {
     })
   );
 
+  app.use(cors())
+
   // availability path
   router.get('/', (req, res) => {
     res.json({ message: 'ok' });
@@ -32,6 +35,8 @@ export default (): Server => {
   router.use('/subscriber', require('./routes/subscriber').default);
   router.use('/cron', require('./routes/cron').default);
   router.use('/seller', require('./routes/seller').default);
+
+  router.use('/last_execution', require('./routes/subscriber/last-execution').default);
 
   // setup event logging dashboard:
   if(process.env.NODE_ENV !== 'test') log();

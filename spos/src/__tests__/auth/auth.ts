@@ -17,7 +17,12 @@ describe('/auth/login', () => {
     expect(result.data.user.username).toBe('admin');
   });
 
-  it('Fails to execute admin priviliged call', async () => {
+  it('Fails to execute admin priviliged call for default', async () => {
     api.expectError(async () => api.authDefault('get', '/subscriber'));
+  });
+
+  it('allows admin access to higher privilige paths', async () => {
+    const result = await api.authAdmin('get', '/subscriber');
+    expect(result.data.subscribers);
   });
 });

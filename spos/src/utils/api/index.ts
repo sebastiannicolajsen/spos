@@ -20,23 +20,21 @@ class Api {
     await this.api.close();
   }
 
+  async expectError(fun: () => Promise<AxiosResponse<any, any>>) {
+    try {
+      await fun();
+      throw new Error('Expected error');
+    } catch (e) {
+      expect(e);
+    }
+  }
+
   async authDefault(
     method: Method,
     path: string,
     data = {}
   ): Promise<AxiosResponse<any, any>> {
     return await this.auth('default', method, path, data);
-  }
-
-  async expectError(
-    fun: () => Promise<AxiosResponse<any, any>>
-  ) {
-    try {
-      await fun();
-      throw new Error('Expected error');
-    } catch (e) {
-      expect(e)
-    }
   }
 
   async authAdmin(
@@ -63,6 +61,7 @@ class Api {
           password: 'supersecret',
         })
       ).data.token;
+      this.token = token;
       this.userType = username;
     }
 
