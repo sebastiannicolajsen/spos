@@ -19,7 +19,7 @@ export class Seller {
     @Column()
     password: string
 
-    @OneToMany(() => Transaction, (t) => t.seller)
+    @OneToMany(() => Transaction, (t) => t.seller, { onDelete: 'CASCADE' })
     transactions: Transaction[]
 
     @Column()

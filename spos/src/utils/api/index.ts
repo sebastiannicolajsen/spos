@@ -45,6 +45,18 @@ class Api {
     return await this.auth('admin', method, path, data);
   }
 
+  async noAuth(
+    method: Method,
+    url: string,
+    data: any
+  ): Promise<AxiosResponse<any, any>> {
+    return this.client.request({
+      method,
+      url,
+      data,
+    });
+  }
+
   private async auth(
     username: string,
     method: Method,

@@ -8,7 +8,7 @@ import PricePointService from '../../../services/PricePointService';
 const router = express.Router();
 
 router.post(
-  '/:id/create',
+  '/:id',
   param('id').isInt(),
   body('value').isNumeric(),
   jwtAuth,
@@ -37,7 +37,7 @@ router.post(
   }
 );
 
-router.get('/:id/reset', param('id').isInt(), jwtAuth, async (req, res) => {
+router.post('/:id/reset', param('id').isInt(), jwtAuth, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });

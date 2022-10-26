@@ -28,7 +28,11 @@ class ProductService extends BaseService {
     super(eventBusService, ProductServiceEvents.FAIL);
   }
 
-  async create(name: string, initial_value: number, minimum_value: number) : Promise<Product> {
+  async create(
+    name: string,
+    initial_value: number,
+    minimum_value: number
+  ): Promise<Product> {
     return await this.error(async () => {
       const product = new Product();
       product.name = name;
@@ -49,13 +53,16 @@ class ProductService extends BaseService {
     });
   }
 
-  async get(relations = defaultRelations) : Promise<Product[]> {
+  async get(relations = defaultRelations): Promise<Product[]> {
     return await this.error(async () => {
       return this.productRepository.find({ relations });
     });
   }
 
-  async findByName(name: string, relations = defaultRelations) : Promise<Product> {
+  async findByName(
+    name: string,
+    relations = defaultRelations
+  ): Promise<Product> {
     return await this.error(async () => {
       return this.productRepository.findOne({ where: { name }, relations });
     });
@@ -64,7 +71,7 @@ class ProductService extends BaseService {
   async update(
     id: number,
     toUpdate = { name: null, initial_value: null, minimum_value: null }
-  ) : Promise<Product> {
+  ): Promise<Product> {
     return await this.error(async () => {
       const product = await this.find(id);
       if (!product) return;
@@ -80,13 +87,14 @@ class ProductService extends BaseService {
     });
   }
 
-  async delete(id: number) : Promise<boolean> {
+  async delete(id: number): Promise<boolean> {
     return await this.error(async () => {
       const product = await this.find(id);
-      if (!product) return;
 
+      if (!product) return;
       const tmp = _.cloneDeep(product);
-      await this.productRepository.remove(product);
+
+      await this.productRepository.delete(product.id);
 
       await this.eventBusService.emit(ProductServiceEvents.DELETE, tmp);
       return true;
