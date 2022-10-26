@@ -5,6 +5,7 @@ import api from "./spos-client";
 
 function App() {
   const products = api.products.useProducts();
+  
 
   return (
     <div className="App">
