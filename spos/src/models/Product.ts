@@ -22,10 +22,10 @@ export class Product {
   @Column()
   timestamp: Date;
 
-  @OneToMany(() => PricePoint, (pp) => pp.product, { onDelete: 'CASCADE' })
+  @OneToMany(() => PricePoint, (pp) => pp.product)
   price_points: PricePoint[];
 
-  @ManyToMany(() => Transaction, { onDelete: 'CASCADE' })
+  @ManyToMany(() => Transaction)
   @JoinTable()
   transactions: Transaction[];
 

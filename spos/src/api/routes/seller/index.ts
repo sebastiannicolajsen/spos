@@ -2,9 +2,7 @@ import * as express from 'express';
 import { body, param, validationResult } from 'express-validator';
 import Container from 'typedi';
 import { SellerRole } from '../../../models/Seller';
-import CronService from '../../../services/CronService';
 import SellerService from '../../../services/SellerService';
-import { sellers } from '../../../utils/seeding/sellers/sellers';
 import { adminAuth, jwtAuth } from '../../middleware';
 
 const router = express.Router();
@@ -19,7 +17,7 @@ router.get('/', jwtAuth, adminAuth, async (req, res) => {
 
 router.get(
   '/:id',
-  param('id').isString(),
+  param('id').isInt(),
   jwtAuth,
   adminAuth,
   async (req, res) => {
@@ -39,7 +37,7 @@ router.get(
 
 router.delete(
   '/:id',
-  param('id').isString(),
+  param('id').isInt(),
   jwtAuth,
   adminAuth,
   async (req, res) => {
@@ -52,7 +50,7 @@ router.delete(
     const result = await sellerService.delete(req.params.id);
 
     if (!result)
-      return res.status(400).json({ errors: [{ msg: 'Job not found' }] });
+      return res.status(400).json({ errors: [{ msg: 'Seller not found' }] });
     return res.json({
       success: true,
     });
@@ -80,7 +78,7 @@ router.post(
         .status(400)
         .json({ errors: [{ msg: 'Something went wrong' }] });
     return res.json({
-      job: result,
+      seller: result,
     });
   }
 );

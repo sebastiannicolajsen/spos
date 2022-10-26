@@ -18,7 +18,7 @@ export class PricePoint {
   @Column()
   timestamp: Date;
 
-  @ManyToOne(() => Product, (p) => p.price_points)
+  @ManyToOne(() => Product, (p) => p.price_points, {onDelete: 'CASCADE'})
   product: Product;
 
   @ManyToMany(() => Transaction)

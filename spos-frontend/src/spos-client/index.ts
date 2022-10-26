@@ -271,18 +271,26 @@ const api = {
         const res = await execReq("GET", "/seller", {});
         return res?.sellers;
       },
-      find: async (username: string): Promise<Seller> => {
-        const res = await execReq("GET", `/seller/${username}`, {});
+      find: async (id: number): Promise<Seller> => {
+        const res = await execReq("GET", `/seller/${id}`, {});
         return res?.seller;
       },
-      delete: async (username: string): Promise<boolean> => {
-        const res = await execReq("DELETE", `/seller/${username}`, {});
+      delete: async (id: number): Promise<boolean> => {
+        const res = await execReq("DELETE", `/seller/${id}`, {});
         return res?.succes;
       },
-      create: async (username: string, password: string): Promise<Seller> => {
-        const res = await execReq("POST", "/seller", { username, password });
+      create: async (
+        username: string,
+        password: string,
+        role: "ADMIN" | "DEFAULT"
+      ): Promise<Seller> => {
+        const res = await execReq("POST", "/seller", {
+          username,
+          password,
+          role,
+        });
         return res?.seller;
-      }
+      },
     },
   },
 };

@@ -20,7 +20,7 @@ passport.use(
         password
       );
       if (valid) {
-        const user = await Container.get(SellerService).find(username);
+        const user = await Container.get(SellerService).findByUsername(username);
         return cb(null, user, {
           message: 'Logged In Successfully',
         });
@@ -41,7 +41,7 @@ passport.use(
     },
     async (req, jwtPayLoad, cb) => {
       try {
-        const user = await Container.get(SellerService).find(
+        const user = await Container.get(SellerService).findByUsername(
           jwtPayLoad.username
         );
         if (!user) return cb('User must be logged In', false);

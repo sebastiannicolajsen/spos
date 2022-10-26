@@ -4,6 +4,7 @@ import Container from 'typedi';
 import ProductService from '../../../services/ProductService';
 import { jwtAuth } from '../../middleware';
 import PricePointService from '../../../services/PricePointService';
+import SubscriberService from '../../../services/SubscriberService';
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.post(
 
     const productService = Container.get(ProductService);
     const pricePointService = Container.get(PricePointService);
+    const subscriberService = Container.get(SubscriberService);
 
     if (!productService.find(req.params.id))
       return res.status(400).json({ errors: [{ msg: 'Product not found' }] });
@@ -30,8 +32,11 @@ router.post(
     );
 
     if (!pricePoint)
-      return res.status(400).json({ errors: [{ msg: 'Something went wrong' }] });
+      return res
+        .status(400)
+        .json({ errors: [{ msg: 'Something went wrong' }] });
 
+    await subscriberService.updateLastExecution();
     const result = await productService.find(req.params.id, ['pricePoints']);
     res.status(200).json({ product: result });
   }
@@ -45,6 +50,7 @@ router.post('/:id/reset', param('id').isInt(), jwtAuth, async (req, res) => {
 
   const productService = Container.get(ProductService);
   const pricePointService = Container.get(PricePointService);
+  const subscriberService = Container.get(SubscriberService);
 
   const product = await productService.find(req.params.id);
   if (!product)
@@ -52,6 +58,7 @@ router.post('/:id/reset', param('id').isInt(), jwtAuth, async (req, res) => {
 
   await pricePointService.reset(product.id);
 
+  await subscriberService.updateLastExecution();
   const result = await productService.find(req.params.id, ['pricePoints']);
   return res.status(200).json({ product: result });
 });

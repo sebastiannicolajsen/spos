@@ -1,9 +1,10 @@
 import { AppDataSource } from '../../repositories/data-source';
 import { products } from './products/products';
 import { sellers } from './sellers/sellers';
+import { transactions } from './transactions/transactions';
 
 // import all seedings
-const seedings = [sellers, products];
+const seedings = [sellers, products, transactions];
 
 console.log('Connecting to db ...');
 AppDataSource.initialize()

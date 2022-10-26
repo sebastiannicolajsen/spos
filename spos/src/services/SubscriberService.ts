@@ -12,7 +12,6 @@ import { Product } from '../models/Product';
 import PricePointService from './PricePointService';
 import BaseService from './BaseService';
 import { PricePoint } from '../models/PricePoint';
-import { BeforeInsert } from 'typeorm';
 import { Transaction } from '../models/Transaction';
 
 export enum SubscriberServiceEvents {
@@ -20,6 +19,7 @@ export enum SubscriberServiceEvents {
   UPDATE = 'subscriber.update',
   DELETE = 'subscriber.delete',
   TRIGGER = 'subscriber.trigger',
+  LAST_EXEC_UPDATE = 'subscriber.last_exec_update',
   VALIDATE = 'subscriber.validate',
   ERROR = 'subscriber.error',
   FAIL = 'subscriber.fail',
@@ -32,7 +32,6 @@ export type ValidationEvent = {
 
 @Service()
 class SubscriberService extends BaseService {
-
   private static last_execution = new Date();
 
   constructor(
@@ -57,7 +56,7 @@ class SubscriberService extends BaseService {
   async get(): Promise<Subscriber[]> {
     return await this.error(async () => {
       return this.subscriberRepository.find();
-    })
+    });
   }
 
   getLastExecution(): Date {
@@ -140,8 +139,10 @@ class SubscriberService extends BaseService {
         for (const [id, price] of Object.entries(pricePoints)) {
           await this.pricePointService.create(parseInt(id), price);
         }
-        await this.eventBusService.emit(SubscriberServiceEvents.TRIGGER, {subscriber})
-        SubscriberService.last_execution = new Date();
+        await this.eventBusService.emit(SubscriberServiceEvents.TRIGGER, {
+          subscriber,
+        });
+        await this.updateLastExecution();
       };
 
       const genFun = await fun(importFromStringSync(subscriber.code));
@@ -149,6 +150,13 @@ class SubscriberService extends BaseService {
       for (const event of subscriber.events) {
         await this.eventBusService.subscribe(event, genFun);
       }
+    });
+  }
+
+  async updateLastExecution(): Promise<void> {
+    SubscriberService.last_execution = new Date();
+    await this.eventBusService.emit(SubscriberServiceEvents.LAST_EXEC_UPDATE, {
+      time: SubscriberService.last_execution,
     });
   }
 

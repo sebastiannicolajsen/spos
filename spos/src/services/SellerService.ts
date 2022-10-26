@@ -27,38 +27,46 @@ class SellerService extends BaseService {
     super(eventBusService, SellerServiceEvents.FAIL);
   }
 
-  async find(username: string): Promise<Seller> {
-    return _.omit(await this.findUnsafe(username), ['password']) as Seller;
+  async find(id: number): Promise<Seller> {
+    return await this.error(async () => {
+      const user = await this.sellerRepository.findOne({ where: { id } });
+      if (!user) return null;
+      return _.omit(user, ['password']) as Seller;
+    });
+  }
+  async findByUsername(username: string): Promise<Seller> {
+    return _.omit(await this.findByUsernameUnsafe(username), ['password']) as Seller;
   }
 
-  async findUnsafe(username: string): Promise<Seller> {
+  async findByUsernameUnsafe(username: string): Promise<Seller> {
     return await this.error(async () => {
       const user = await this.sellerRepository.findOne({ where: { username } });
       if (!user) return null;
-
       return user;
     });
   }
 
   async get(): Promise<Seller[]> {
     return await this.error(async () => {
-      return (await this.sellerRepository.find()).map((u) => _.omit(u, ['password']));
+      return (await this.sellerRepository.find()).map((u) =>
+        _.omit(u, ['password'])
+      );
     });
   }
 
-  async delete(username: string): Promise<boolean> {
+  async delete(id: number): Promise<boolean> {
     return await this.error(async () => {
       const user = await this.sellerRepository.findOne({
         where: {
-          username,
+          id,
         },
       });
 
       if (!user) {
         return false;
       }
+      await this.sellerRepository.remove(user);
 
-      await this.sellerRepository.delete(user.id);
       await this.eventBusService.emit(SellerServiceEvents.DELETED, {
         username: user.username,
       });

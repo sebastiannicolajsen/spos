@@ -31,16 +31,16 @@ export class Transaction {
   @Column()
   timestamp: Date;
 
-  @ManyToOne(() => Seller, (s) => s.transactions)
+  @ManyToOne(() => Seller, (s) => s.transactions, { onDelete: 'CASCADE' })
   seller: Seller;
 
   items: Item[];
 
-  @ManyToMany(() => Product)
+  @ManyToMany(() => Product, {onDelete: 'CASCADE'})
   @JoinTable()
   products_: Product[];
 
-  @ManyToMany(() => PricePoint)
+  @ManyToMany(() => PricePoint, { onDelete: 'CASCADE'})
   @JoinTable()
   price_points_: PricePoint[];
 

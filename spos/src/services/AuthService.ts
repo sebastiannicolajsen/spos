@@ -22,7 +22,7 @@ class AuthService extends BaseService {
 
   async validate(username: string, password: string): Promise<boolean> {
     return await this.error(async () => {
-      const user = await this.sellerService.findUnsafe(username);
+      const user = await this.sellerService.findByUsernameUnsafe(username);
 
       if (!user) return Promise.resolve(false);
 

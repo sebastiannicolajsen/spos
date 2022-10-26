@@ -94,7 +94,7 @@ class ProductService extends BaseService {
       if (!product) return;
       const tmp = _.cloneDeep(product);
 
-      await this.productRepository.delete(product.id);
+      await this.productRepository.remove(product);
 
       await this.eventBusService.emit(ProductServiceEvents.DELETE, tmp);
       return true;

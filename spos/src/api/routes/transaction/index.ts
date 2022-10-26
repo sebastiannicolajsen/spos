@@ -17,16 +17,18 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    console.log(req.user)
+    console.log(req.user);
     const transactionService = Container.get(TransactionService);
     const transaction = await transactionService.create(
       (req.user as any)?.id,
       req.body.items
     );
     if (!transaction)
-      return res.status(400).json({ errors: [{ msg: 'Something went wrong' }] });
+      return res
+        .status(400)
+        .json({ errors: [{ msg: 'Something went wrong' }] });
 
-    res.status(200).json({ success: true });
+    res.status(200).json({ transaction });
   }
 );
 
@@ -60,6 +62,8 @@ router.delete('/:id', param('id').isNumeric(), jwtAuth, async (req, res) => {
 
   const transactionService = Container.get(TransactionService);
   const transaction = await transactionService.delete(req.params.id);
+  if (!transaction)
+    return res.status(400).json({ errors: [{ msg: 'Something went wrong' }] });
   res.status(200).json({ success: true });
 });
 

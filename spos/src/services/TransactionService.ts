@@ -10,6 +10,7 @@ import {
 } from '../repositories/TransactionRepository';
 import BaseService from './BaseService';
 import EventBusService from './EventBusService';
+import ProductService from './ProductService';
 
 export enum TransactionServiceEvents {
   CREATE = 'transaction.create',
@@ -24,13 +25,24 @@ class TransactionService extends BaseService {
     @Inject()
     private readonly eventBusService: EventBusService,
     @Inject(TransactionRepositoryId)
-    private readonly transactionRepository: typeof TransactionRepository
+    private readonly transactionRepository: typeof TransactionRepository,
+    @Inject()
+    private readonly ProductService: ProductService
   ) {
     super(eventBusService, TransactionServiceEvents.FAIL);
   }
 
-  async create(seller_id: number, items: ShallowItem[]) : Promise<Transaction> {
+  async create(seller_id: number, items: ShallowItem[]): Promise<Transaction> {
     return await this.error(async () => {
+      for (const item of items) {
+        const product = await this.ProductService.find(item.product_id);
+        if (!product) return;
+        if (
+          !product.price_points.map((p) => p.id).includes(item.price_point_id)
+        )
+          return;
+      }
+
       const transaction = new Transaction();
       transaction.seller = { id: seller_id } as Seller;
       console.log(transaction.seller);
@@ -49,7 +61,7 @@ class TransactionService extends BaseService {
       await this.transactionRepository.save(result);
 
       await this.eventBusService.emit(TransactionServiceEvents.CREATE, result);
-      return true;
+      return await this.find(transaction.id);
     });
   }
 
@@ -75,7 +87,7 @@ class TransactionService extends BaseService {
     };
   }
 
-  async get(relations = defaultRelations) : Promise<Transaction[]> {
+  async get(relations = defaultRelations): Promise<Transaction[]> {
     return await this.error(async () => {
       return (await this.transactionRepository.find({ relations })).map(
         this.unwrap
@@ -83,7 +95,7 @@ class TransactionService extends BaseService {
     });
   }
 
-  async find(id: number, relations = defaultRelations) : Promise<Transaction> {
+  async find(id: number, relations = defaultRelations): Promise<Transaction> {
     return await this.error(async () => {
       return this.unwrap(
         await this.transactionRepository.findOne({ where: { id }, relations })
@@ -91,7 +103,7 @@ class TransactionService extends BaseService {
     });
   }
 
-  async delete(id: number) : Promise<boolean> {
+  async delete(id: number): Promise<boolean> {
     return await this.error(async () => {
       const transaction = await this.find(id);
       if (!transaction) return;

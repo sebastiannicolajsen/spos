@@ -8,6 +8,7 @@ import EventBusService from './EventBusService';
 import ProductService from './ProductService';
 import { PricePoint } from '../models/PricePoint';
 import BaseService from './BaseService';
+import SubscriberService from './SubscriberService';
 
 export enum PricePointServiceEvents {
   CREATED = 'pricepoint.created',
@@ -23,17 +24,18 @@ class PricePointService extends BaseService {
     @Inject()
     private readonly productService: ProductService,
     @Inject(PricePointRepositoryId)
-    private readonly pricePointRepository: typeof PricePointRepository
+    private readonly pricePointRepository: typeof PricePointRepository,
   ) {
     super(eventBusService, PricePointServiceEvents.FAIL);
   }
 
-  async create(product_id: number, value: number) : Promise<PricePoint> {
+  async create(product_id: number, value: number): Promise<PricePoint> {
     return await this.error(async () => {
       const product = await this.productService.find(product_id, []);
       if (!product) return;
       const pricePoint = new PricePoint();
-      pricePoint.value = value >= product.minimum_value ? value : product.minimum_value;
+      pricePoint.value =
+        value >= product.minimum_value ? value : product.minimum_value;
       const result = await this.pricePointRepository.create(pricePoint);
       result.product = product;
       await this.pricePointRepository.save(result);
@@ -43,7 +45,7 @@ class PricePointService extends BaseService {
     });
   }
 
-  async reset(product_id) : Promise<boolean> {
+  async reset(product_id): Promise<boolean> {
     return await this.error(async () => {
       const pricePoints = await this.pricePointRepository.find({
         where: { product: { id: product_id } },
@@ -57,6 +59,7 @@ class PricePointService extends BaseService {
         PricePointServiceEvents.RESET,
         product_id
       );
+
       return true;
     });
   }
