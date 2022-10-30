@@ -1,4 +1,4 @@
-import { Inject } from 'typedi';
+import { Inject, Service } from 'typedi';
 import EventBusService from './EventBusService';
 import { CronJob as cron } from 'cron';
 import {
@@ -20,12 +20,13 @@ export enum CronServiceEvents {
 }
 
 export type CronJobData = CronJob & {
-  status: boolean
-}
+  status: boolean;
+};
 
+@Service()
 class CronService extends BaseService {
-  private readonly jobs: { [key: string]: cron } = {};
-  private readonly jobs_status: {[key: string]: boolean} = {};
+  private static readonly jobs: { [key: string]: cron } = {};
+  private static readonly jobs_status: { [key: string]: boolean } = {};
 
   constructor(
     @Inject()
@@ -39,12 +40,19 @@ class CronService extends BaseService {
   private wrap(job: CronJob): CronJobData {
     return {
       ...job,
-      status: this.jobs_status[job.id]
-    } 
+      status: CronService.jobs_status[job.id],
+    };
   }
 
-  async create(id: string, event: string, interval: string): Promise<CronJobData> {
+  async create(
+    id: string,
+    event: string,
+    interval: string
+  ): Promise<CronJobData> {
     return await this.error(async () => {
+
+      if(CronService.jobs[id]) return;
+
       const job = new CronJob();
       job.id = id;
       job.event = event;
@@ -61,60 +69,63 @@ class CronService extends BaseService {
     });
   }
 
-  private async setupJob(job: CronJob) : Promise<boolean> {
+  private async setupJob(job: CronJob): Promise<boolean> {
     return await this.error(async () => {
       const actual: cron = new cron(job.interval, async () => {
         await this.eventBusService.emit(job.event, job);
       });
-      this.jobs[job.id] = actual;
-      this.jobs_status[job.id] = true;
+      CronService.jobs[job.id] = actual;
+      CronService.jobs_status[job.id] = true;
       actual.start();
       return true;
     });
   }
 
-  async init() : Promise<boolean> {
+  async init(): Promise<boolean> {
     return await this.error(async () => {
       const jobs = await this.get();
+      if(!jobs || jobs.length === 0) return;
       for (const job of jobs) await this.setupJob(job);
       await this.eventBusService.emit(CronServiceEvents.INIT, jobs);
       return true;
     });
   }
 
-  async delete(id: string) : Promise<boolean> {
+  async delete(id: string): Promise<boolean> {
     return await this.error(async () => {
       const job = await this.find(id);
       if (!job) return false;
-      this.jobs[id].stop();
+      CronService.jobs[id].stop();
       await this.cronJobRepository.delete(job.id);
-      const res = delete this.jobs[id];
+      const res = delete CronService.jobs[id];
       await this.eventBusService.emit(CronServiceEvents.DELETE, job);
       return res;
     });
   }
 
-  async pause(id: string) : Promise<boolean> {
+  async pause(id: string): Promise<boolean> {
     return await this.error(async () => {
-      if (!this.jobs[id]) return false;
-      if(!this.jobs_status[id]) return false;
-      this.jobs[id].stop();
+      if (!CronService.jobs[id]) return false;
+      if (!CronService.jobs_status[id]) return false;
+      CronService.jobs[id].stop();
+      CronService.jobs_status[id] = false;
       await this.eventBusService.emit(CronServiceEvents.STOP, { id });
       return true;
     });
   }
 
-  async restart(id: string) : Promise<boolean> {
+  async restart(id: string): Promise<boolean> {
     return await this.error(async () => {
-      if (!this.jobs[id]) return false;
-      if(this.jobs_status[id]) return false;
-      this.jobs[id].start();
+      if (!CronService.jobs[id]) return false;
+      if (CronService.jobs_status[id]) return false;
+      CronService.jobs[id].start();
+      CronService.jobs_status[id] = true;
       await this.eventBusService.emit(CronServiceEvents.START, { id });
       return true;
     });
   }
 
-  async update(id: string, toUpdate = {event: null, interval: null} ){
+  async update(id: string, toUpdate = { event: null, interval: null }) {
     return await this.error(async () => {
       const job = await this.find(id);
       if (!job) return;
@@ -138,7 +149,7 @@ class CronService extends BaseService {
     });
   }
 
-  async trigger(id: string) : Promise<boolean> {
+  async trigger(id: string): Promise<boolean> {
     return await this.error(async () => {
       const job = await this.find(id);
       if (!job) return;

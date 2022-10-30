@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   AuthData,
   CronJobData,
+  Interval,
   ItemShallow,
   Product,
   Seller,
@@ -253,9 +254,15 @@ const api = {
     create: async (
       id: string,
       event: string,
-      interval: string
+      interval: Interval
     ): Promise<CronJobData> => {
-      const res = await execReq("POST", "/cron", { id, event, interval });
+      const cronInterval = `*/${interval.seconds} */${interval.minutes} */${interval.hours} */${interval.days} */${interval.months} *`;
+
+      const res = await execReq("POST", "/cron", {
+        id,
+        event,
+        interval: cronInterval,
+      });
       return res?.job;
     },
     pause: async (id: string): Promise<boolean> => {

@@ -29,6 +29,14 @@ export type ItemShallow = {
     quantity: number,
 }
 
+export type Interval = {
+    seconds: number,
+    minutes: number,
+    hours: number,
+    days: number,
+    months: number,
+}
+
 export type Item = ItemExpanded | ItemShallow
 
 export type Transaction = {

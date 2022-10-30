@@ -30,6 +30,7 @@ class EventBusService {
   }
 
   public async emit(event: string, data: any): Promise<void> {
+    console.log(`Redis: emitting ${event}`);
     client.publish(this.channel, JSON.stringify([event, data]));
   }
 

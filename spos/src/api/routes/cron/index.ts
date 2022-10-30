@@ -6,6 +6,9 @@ import { adminAuth, jwtAuth } from '../../middleware';
 
 const router = express.Router();
 
+export const NEVER_EXECUTE = '0 0 30 2 0 0' // cron that never executes (Feb 30th)
+
+
 router.get('/', jwtAuth, adminAuth, async (req, res) => {
   const cronService = Container.get(CronService);
   const result = await cronService.get();
@@ -104,7 +107,7 @@ router.post(
   '/',
   body('id').isString(),
   body('event').isString(),
-  body('interval').isString(),
+  body('interval').isString().matches(/(\*(|\/[\d]+)\s?){6,6}/gm).optional(), // only allows intervals (no fixed time)
   jwtAuth,
   adminAuth,
   async (req, res) => {
@@ -116,7 +119,7 @@ router.post(
     const result = await cronService.create(
       req.body.id,
       req.body.event,
-      req.body.interval
+      req.body.interval ? req.body.interval : NEVER_EXECUTE
     );
 
     if (!result)
