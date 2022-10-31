@@ -2,8 +2,7 @@ import * as express from 'express';
 import { body, param, validationResult } from 'express-validator';
 import Container from 'typedi';
 import SubscriberService from '../../../services/SubscriberService';
-import { adminAuth, jwtAuth } from '../../middleware';
-
+import { adminAuth } from '../../middleware';
 
 const router = express.Router();
 
@@ -18,7 +17,6 @@ router.get('/', adminAuth, async (req, res) => {
 router.get(
   '/:id',
   param('id').isString(),
-  jwtAuth,
   adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
@@ -37,12 +35,9 @@ router.get(
   }
 );
 
-
-
-router.delete(
-  '/:id',
+router.post(
+  '/:id/trigger',
   param('id').isString(),
-  jwtAuth,
   adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
@@ -51,16 +46,30 @@ router.delete(
     }
 
     const subscriberService = Container.get(SubscriberService);
-    const result = await subscriberService.delete(req.params.id);
-    if (!result)
+    const result = await subscriberService.trigger(req.params.id);
+    if (!result) {
       return res
         .status(400)
-        .json({ errors: [{ msg: 'Subscriber not found' }] });
-    return res.json({
-      success: true,
-    });
+        .json({ errors: [{ msg: 'Something went wrong' }] });
+    }
+    return res.json({ success: true });
   }
 );
+
+router.delete('/:id', param('id').isString(), adminAuth, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const subscriberService = Container.get(SubscriberService);
+  const result = await subscriberService.delete(req.params.id);
+  if (!result)
+    return res.status(400).json({ errors: [{ msg: 'Subscriber not found' }] });
+  return res.json({
+    success: true,
+  });
+});
 
 router.post(
   '/',
@@ -68,7 +77,6 @@ router.post(
   body('events').isArray(),
   body('objects').isArray(),
   body('code').isString(),
-  jwtAuth,
   adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
@@ -97,7 +105,6 @@ router.post(
   body('id').isString(),
   body('objects').isArray(),
   body('code').isString(),
-  jwtAuth,
   adminAuth,
   async (req, res) => {
     const errors = validationResult(req);

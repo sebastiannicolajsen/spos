@@ -77,14 +77,17 @@ class Api {
       this.userType = username;
     }
 
-    return this.client.request({
+    let result;
+    
+    await this.client.request({
       method,
       url,
       headers: {
         Authorization: `Bearer ${token}`,
       },
       data,
-    });
+    }).then(res => result = res).catch(e => console.error(e));
+    return result;
   }
 }
 export default new Api();

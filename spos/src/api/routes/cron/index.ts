@@ -2,14 +2,12 @@ import * as express from 'express';
 import { body, param, validationResult } from 'express-validator';
 import Container from 'typedi';
 import CronService from '../../../services/CronService';
-import { adminAuth, jwtAuth } from '../../middleware';
+import { adminAuth } from '../../middleware';
 
 const router = express.Router();
 
-export const NEVER_EXECUTE = '0 0 30 2 0 0' // cron that never executes (Feb 30th)
 
-
-router.get('/', jwtAuth, adminAuth, async (req, res) => {
+router.get('/', adminAuth, async (req, res) => {
   const cronService = Container.get(CronService);
   const result = await cronService.get();
   return res.json({
@@ -20,7 +18,6 @@ router.get('/', jwtAuth, adminAuth, async (req, res) => {
 router.get(
   '/:id',
   param('id').isString(),
-  jwtAuth,
   adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
@@ -40,7 +37,6 @@ router.get(
 router.post(
   '/:id/pause',
   param('id').isString(),
-  jwtAuth,
   adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
@@ -62,7 +58,6 @@ router.post(
 router.post(
   '/:id/restart',
   param('id').isString(),
-  jwtAuth,
   adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
@@ -84,7 +79,6 @@ router.post(
 router.delete(
   '/:id',
   param('id').isString(),
-  jwtAuth,
   adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
@@ -107,8 +101,7 @@ router.post(
   '/',
   body('id').isString(),
   body('event').isString(),
-  body('interval').isString().matches(/(\*(|\/[\d]+)\s?){6,6}/gm).optional(), // only allows intervals (no fixed time)
-  jwtAuth,
+  body('interval').isString().matches(/((\*|\d)(|\/[\d]+)\s?){6,6}/gm), // only allows intervals (no fixed time)
   adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
@@ -119,7 +112,7 @@ router.post(
     const result = await cronService.create(
       req.body.id,
       req.body.event,
-      req.body.interval ? req.body.interval : NEVER_EXECUTE
+      req.body.interval
     );
 
     if (!result)

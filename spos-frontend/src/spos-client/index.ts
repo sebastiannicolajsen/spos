@@ -205,6 +205,10 @@ const api = {
       const res = await execReq("DELETE", `/subscriber/${id}`, {});
       return res?.success;
     },
+    trigger: async (id: string) : Promise<boolean> => {
+      const res = await execReq("POST", `/subscriber/${id}/trigger`, {});
+      return res?.success;
+    },
     create: async (
       id: string,
       events: string[],
@@ -256,7 +260,7 @@ const api = {
       event: string,
       interval: Interval
     ): Promise<CronJobData> => {
-      const cronInterval = `*/${interval.seconds} */${interval.minutes} */${interval.hours} */${interval.days} */${interval.months} *`;
+      const cronInterval = `${interval.seconds} ${interval.minutes} ${interval.hours} ${interval.days} ${interval.months} *`;
 
       const res = await execReq("POST", "/cron", {
         id,

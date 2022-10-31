@@ -1,82 +1,88 @@
-
 export type Product = {
-    id: number,
-    name: string,
-    timestamp: Date,
-    initial_value: number,
-    minimum_value: number,
-    price_points: PricePoint[],
-    transactions: Transaction[]
-}
+  id: number;
+  name: string;
+  timestamp: Date;
+  initial_value: number;
+  minimum_value: number;
+  price_points: PricePoint[];
+  transactions: Transaction[];
+};
 
 export type PricePoint = {
-    id: number,
-    timestamp: Date,
-    value: number,
-    transactions: Transaction[],
-    product: Product,
-}
+  id: number;
+  timestamp: Date;
+  value: number;
+  transactions: Transaction[];
+  product: Product;
+};
 
 export type ItemExpanded = {
-    product: Product,
-    price_point: PricePoint,
-    quantity: number,
-}
+  product: Product;
+  price_point: PricePoint;
+  quantity: number;
+};
 
 export type ItemShallow = {
-    product_id: number,
-    price_point_id: number,
-    quantity: number,
+  product_id: number;
+  price_point_id: number;
+  quantity: number;
+};
+
+export function xMinute(interval: number): Interval {
+  return {
+    seconds: "0",
+    minutes: `${interval}`,
+    hours: "*",
+    days: "*",
+    months: "*",
+  };
 }
 
 export type Interval = {
-    seconds: number,
-    minutes: number,
-    hours: number,
-    days: number,
-    months: number,
-}
+  seconds: string;
+  minutes: string;
+  hours: string;
+  days: string;
+  months: string;
+};
 
-export type Item = ItemExpanded | ItemShallow
+export type Item = ItemExpanded | ItemShallow;
 
 export type Transaction = {
-    id: number,
-    timestamp: Date,
-    seller: Seller[],
-    items: Item[]
-}
+  id: number;
+  timestamp: Date;
+  seller: Seller[];
+  items: Item[];
+};
 
 export enum SellerRole {
-    UNKNOWN = "UNKNOWN",
-    DEFAULT = "DEFAULT",
-    ADMIN = "ADMIN"
+  UNKNOWN = "UNKNOWN",
+  DEFAULT = "DEFAULT",
+  ADMIN = "ADMIN",
 }
 
 export type Seller = {
-    id: number,
-    username: string,
-    transactions: Transaction[],
-    role: SellerRole
-}
+  id: number;
+  username: string;
+  transactions: Transaction[];
+  role: SellerRole;
+};
 
 export type AuthData = {
-    token: string
-    user: Seller
-} 
+  token: string;
+  user: Seller;
+};
 
 export type Subscriber = {
-    id: string,
-    code: string,
-    events: string[],
-    objects: string[]
-}
-
+  id: string;
+  code: string;
+  events: string[];
+  objects: string[];
+};
 
 export type CronJobData = {
-    id: string;
-    event: string;
-    interval: string;
-    status: boolean;
-}
-
-
+  id: string;
+  event: string;
+  interval: string;
+  status: boolean;
+};

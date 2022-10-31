@@ -33,6 +33,7 @@ export type ValidationEvent = {
 @Service()
 class SubscriberService extends BaseService {
   private static last_execution = new Date();
+  private static wrappers = {};
 
   constructor(
     @Inject()
@@ -45,6 +46,16 @@ class SubscriberService extends BaseService {
     private readonly pricePointService: PricePointService
   ) {
     super(eventBusService, SubscriberServiceEvents.FAIL);
+  }
+
+  async init(): Promise<boolean> {
+    return await this.error(async () => {
+      const subscribers = await this.subscriberRepository.find();
+      for (const subscriber of subscribers) {
+        await this.subscriberWrapper(subscriber);
+      }
+      return true;
+    });
   }
 
   async find(id: string): Promise<Subscriber> {
@@ -147,6 +158,8 @@ class SubscriberService extends BaseService {
 
       const genFun = await fun(importFromStringSync(subscriber.code));
 
+      SubscriberService.wrappers[subscriber.id] = genFun;
+
       for (const event of subscriber.events) {
         await this.eventBusService.subscribe(event, genFun);
       }
@@ -160,12 +173,10 @@ class SubscriberService extends BaseService {
     });
   }
 
-  async init(): Promise<boolean> {
+  async trigger(id: string) {
     return await this.error(async () => {
-      const subscribers = await this.subscriberRepository.find();
-      for (const subscriber of subscribers) {
-        await this.subscriberWrapper(subscriber);
-      }
+      if(!SubscriberService.wrappers[id]) return false;
+      await SubscriberService.wrappers[id]();
       return true;
     });
   }

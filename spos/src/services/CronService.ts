@@ -21,6 +21,7 @@ export enum CronServiceEvents {
 
 export type CronJobData = CronJob & {
   status: boolean;
+  next: Date;
 };
 
 @Service()
@@ -41,6 +42,7 @@ class CronService extends BaseService {
     return {
       ...job,
       status: CronService.jobs_status[job.id],
+      next: CronService.jobs[job.id].nextDate().toJSDate(),
     };
   }
 
@@ -83,10 +85,16 @@ class CronService extends BaseService {
 
   async init(): Promise<boolean> {
     return await this.error(async () => {
-      const jobs = await this.get();
+      const jobs = await this.cronJobRepository.find();
       if(!jobs || jobs.length === 0) return;
       for (const job of jobs) await this.setupJob(job);
       await this.eventBusService.emit(CronServiceEvents.INIT, jobs);
+      return true;
+    });
+  }
+  async shutdown(): Promise<boolean> {
+    return await this.error(async () => {
+      for (const job of Object.values(CronService.jobs)) job.stop();
       return true;
     });
   }
@@ -149,15 +157,6 @@ class CronService extends BaseService {
     });
   }
 
-  async trigger(id: string): Promise<boolean> {
-    return await this.error(async () => {
-      const job = await this.find(id);
-      if (!job) return;
-      await this.eventBusService.emit(job.event, job);
-      await this.eventBusService.emit(CronServiceEvents.TRIGGER, job);
-      return true;
-    });
-  }
 }
 
 export default CronService;
