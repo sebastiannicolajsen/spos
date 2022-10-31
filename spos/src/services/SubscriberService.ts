@@ -92,7 +92,6 @@ class SubscriberService extends BaseService {
 
       try {
         const module = importFromStringSync('export default ' + code).default;
-        console.log(module);
         if (typeof module !== 'function')
           return { success: false, message: 'Code is not a function' };
 
@@ -228,23 +227,19 @@ class SubscriberService extends BaseService {
       const { events, objects, code } = toUpdate;
 
       const validation = await this.validate(
-        id,
+        `id${Math.random()}`, // hack to validate when subscriber is being updated
         objects ? objects : subscriber.objects,
         code ? code : subscriber.code
       );
       if (!validation.success) return validation;
-
-      if (events) subscriber.events = events;
-      if (objects) subscriber.objects = objects;
-      if (code) subscriber.code = code;
-
-      await this.subscriberRepository.save(subscriber);
-
-      await this.eventBusService.emit(
-        SubscriberServiceEvents.UPDATE,
-        subscriber
-      );
-      return _.omit(subscriber, ['_events', '_objects']);
+      
+      await this.delete(id);
+      return await this.create(
+        id,
+        events ? events : subscriber.events,
+        objects ? objects : subscriber.objects,
+        code ? code : subscriber.code
+      )
     });
   }
 

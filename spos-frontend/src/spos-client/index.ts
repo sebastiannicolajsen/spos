@@ -223,6 +223,19 @@ const api = {
       });
       return res?.subscriber;
     },
+    update: async (
+      id: string,
+      events: string[] | null = null,
+      objects: string[] | null = null,
+      code: string | null = null
+    ) => {
+      const res = await execReq("PUT", `/subscriber/update/${id}`, {
+        events,
+        objects,
+        code,
+      });
+      return res?.subscriber;
+    },
     validate: async (
       id: string,
       events: string[],
