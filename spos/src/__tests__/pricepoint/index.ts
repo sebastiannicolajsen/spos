@@ -40,6 +40,7 @@ describe('/price_point', () => {
 
     const result = await api.authAdmin('POST', '/price_point/1/reset');
     expect(result.status).toBe(200);
+    expect(result.data.product).toBeDefined();
 
     const { data } = await api.authAdmin('GET', '/product/1');
     expect(data.product.price_points.length).toBe(1);

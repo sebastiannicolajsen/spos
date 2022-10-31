@@ -34,6 +34,7 @@ export type ValidationEvent = {
 class SubscriberService extends BaseService {
   private static last_execution = new Date();
   private static wrappers = {};
+  private static idMap = {};
 
   constructor(
     @Inject()
@@ -80,7 +81,7 @@ class SubscriberService extends BaseService {
     code: string
   ): Promise<ValidationEvent> {
     return await this.error(async () => {
-      if (this.find(id))
+      if (await this.find(id))
         return { success: false, message: 'Subscriber already existing' };
       for (const oid of objects) {
         if (oid === '*') continue;
@@ -88,11 +89,13 @@ class SubscriberService extends BaseService {
         if (!exists)
           return { success: false, message: `${oid} does not exist` };
       }
-      const module = importFromStringSync(code);
-      if (typeof module !== 'function')
-        return { success: false, message: 'Code is not a function' };
 
       try {
+        const module = importFromStringSync('export default ' + code).default;
+        console.log(module);
+        if (typeof module !== 'function')
+          return { success: false, message: 'Code is not a function' };
+
         const product = new Product();
         product.id = 1;
         product.name = 'test';
@@ -100,17 +103,18 @@ class SubscriberService extends BaseService {
         product.price_points[0].value = 1;
         product.price_points[0].timestamp = new Date();
         product.transactions = [new Transaction()];
-        const result = module([product]);
+        const result = await module([product]);
+        console.log(result);
         const obj = result[1];
-        if (obj instanceof PricePoint)
+        if (isNaN(obj))
           return {
             success: false,
-            message: 'Code does not return PricePoints',
+            message: 'Code does not return price',
           };
       } catch (e) {
         return {
           success: false,
-          message: 'Code failed to accept or return a valid object',
+          message: 'Code failed to compile, accept, or return a valid number',
         };
       }
 
@@ -140,6 +144,7 @@ class SubscriberService extends BaseService {
         try {
           pricePoints = module(products);
         } catch (e) {
+          console.log(e);
           this.eventBusService.emit(SubscriberServiceEvents.ERROR, {
             subscriber,
             error: e,
@@ -156,13 +161,19 @@ class SubscriberService extends BaseService {
         await this.updateLastExecution();
       };
 
-      const genFun = await fun(importFromStringSync(subscriber.code));
+      const genFun = await fun(
+        importFromStringSync('export default ' + subscriber.code).default
+      );
 
       SubscriberService.wrappers[subscriber.id] = genFun;
 
+      let id;
+
       for (const event of subscriber.events) {
-        await this.eventBusService.subscribe(event, genFun);
+        id = await this.eventBusService.subscribe(event, genFun);
       }
+
+      SubscriberService.idMap[subscriber.id] = id;
     });
   }
 
@@ -175,7 +186,7 @@ class SubscriberService extends BaseService {
 
   async trigger(id: string) {
     return await this.error(async () => {
-      if(!SubscriberService.wrappers[id]) return false;
+      if (!SubscriberService.wrappers[id]) return false;
       await SubscriberService.wrappers[id]();
       return true;
     });
@@ -202,7 +213,7 @@ class SubscriberService extends BaseService {
         SubscriberServiceEvents.CREATE,
         subscriber
       );
-      return subscriber;
+      return _.omit(subscriber, ['_events', '_objects']);
     });
   }
 
@@ -213,7 +224,16 @@ class SubscriberService extends BaseService {
     return await this.error(async () => {
       const subscriber = await this.find(id);
       if (!subscriber) return;
+
       const { events, objects, code } = toUpdate;
+
+      const validation = await this.validate(
+        id,
+        objects ? objects : subscriber.objects,
+        code ? code : subscriber.code
+      );
+      if (!validation.success) return validation;
+
       if (events) subscriber.events = events;
       if (objects) subscriber.objects = objects;
       if (code) subscriber.code = code;
@@ -224,7 +244,7 @@ class SubscriberService extends BaseService {
         SubscriberServiceEvents.UPDATE,
         subscriber
       );
-      return subscriber;
+      return _.omit(subscriber, ['_events', '_objects']);
     });
   }
 
@@ -234,7 +254,10 @@ class SubscriberService extends BaseService {
       if (!subscriber) return;
 
       const tmp = _.cloneDeep(subscriber);
+
       await this.subscriberRepository.remove(subscriber);
+      SubscriberService.wrappers[id] = null;
+      await this.eventBusService.unsubscribe(SubscriberService.idMap[id]);
 
       await this.eventBusService.emit(SubscriberServiceEvents.DELETE, tmp);
       return true;

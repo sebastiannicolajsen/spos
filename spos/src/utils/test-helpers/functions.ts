@@ -1,5 +1,6 @@
 import Container from 'typedi';
 import CronService from '../../services/CronService';
+import SubscriberService from '../../services/SubscriberService';
 import api from '../api';
 import setupdb from '../db';
 import subscribers from '../subscribers';
@@ -13,6 +14,7 @@ export default {
     await subscribers()
     await api.setupApi();
     await Container.get(CronService).init();
+    await Container.get(SubscriberService).init();
   },
 
   teardown: async () => {

@@ -59,7 +59,7 @@ router.post('/:id/reset', param('id').isInt(), jwtAuth, async (req, res) => {
   await pricePointService.reset(product.id);
 
   await subscriberService.updateLastExecution();
-  const result = await productService.find(req.params.id, ['pricePoints']);
+  const result = await productService.find(req.params.id, ['price_points']);
   return res.status(200).json({ product: result });
 });
 

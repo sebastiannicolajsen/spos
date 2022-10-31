@@ -14,11 +14,11 @@ if (process.env.NODE_ENV === 'test') {
   subscriber = new RealRedis(process.env.REDIS_HOST);
 }
 
-
 @Service()
 class EventBusService {
-
-  private readonly channel = "spos-events"
+  private readonly channel = 'spos-events';
+  private static nextId = 0;
+  private static map = {};
 
   constructor() {
     subscriber.subscribe(this.channel, (err, count) => {
@@ -34,14 +34,22 @@ class EventBusService {
     client.publish(this.channel, JSON.stringify([event, data]));
   }
 
+  public async unsubscribe(id: number): Promise<void> {
+    subscriber.removeListener("message", EventBusService.map[id]);
+  }
+
   public async subscribe(
     event: string,
     callback: (event: string, data: any) => void
-  ): Promise<void> {
-    subscriber.on('message', (_, message) => {
+  ): Promise<number> {
+    const cb = (_, message) => {
       const [event_, data] = JSON.parse(message);
       if (event_ === event) callback(event_, data);
-    });
+    };
+    subscriber.on('message', cb);
+    const id = EventBusService.nextId++;
+    EventBusService.map[id] = cb;
+    return id;
   }
 }
 

@@ -14,26 +14,19 @@ router.get('/', adminAuth, async (req, res) => {
   });
 });
 
-router.get(
-  '/:id',
-  param('id').isString(),
-  adminAuth,
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    const subscriberService = Container.get(SubscriberService);
-    const result = await subscriberService.find(req.params.id);
-    if (!result)
-      return res
-        .status(400)
-        .json({ errors: [{ msg: 'Subscriber not found' }] });
-    return res.json({
-      subscriber: result,
-    });
+router.get('/:id', param('id').isString(), adminAuth, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
-);
+  const subscriberService = Container.get(SubscriberService);
+  const result = await subscriberService.find(req.params.id);
+  if (!result)
+    return res.status(400).json({ errors: [{ msg: 'Subscriber not found' }] });
+  return res.json({
+    subscriber: result,
+  });
+});
 
 router.post(
   '/:id/trigger',
@@ -122,7 +115,35 @@ router.post(
         .status(400)
         .json({ errors: [{ msg: 'Something went wrong' }] });
     return res.status(200).json({
-      valid: true,
+      validation: result,
+    });
+  }
+);
+
+router.post(
+  '/update/:id',
+  param('id').isString(),
+  body('events').optional().isArray(),
+  body('objects').optional().isArray(),
+  body('code').optional().isString(),
+  adminAuth,
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const subscriberService = Container.get(SubscriberService);
+    const result = await subscriberService.update(req.params.id, {
+      events: req.body.events,
+      objects: req.body.objects,
+      code: req.body.code,
+    });
+    if (!result)
+      return res
+        .status(400)
+        .json({ errors: [{ msg: 'Something went wrong' }] });
+    return res.json({
+      subscriber: result,
     });
   }
 );
