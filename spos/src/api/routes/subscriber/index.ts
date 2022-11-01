@@ -121,7 +121,7 @@ router.post(
 );
 
 router.post(
-  '/update/:id',
+  '/:id',
   param('id').isString(),
   body('events').optional().isArray(),
   body('objects').optional().isArray(),

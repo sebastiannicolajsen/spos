@@ -41,7 +41,7 @@ class EventService{
   ) {
   }
 
-  async getEvents() {
+  async get() {
     const cronTriggers = await this.cronJobRepository.find();
     const subscribers = await this.subscriberRepository.find();
     const total = [

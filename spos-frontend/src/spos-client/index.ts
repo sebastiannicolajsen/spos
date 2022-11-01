@@ -229,7 +229,7 @@ const api = {
       objects: string[] | null = null,
       code: string | null = null
     ) => {
-      const res = await execReq("PUT", `/subscriber/update/${id}`, {
+      const res = await execReq("PUT", `/subscriber/${id}`, {
         events,
         objects,
         code,

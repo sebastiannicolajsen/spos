@@ -24,9 +24,9 @@ describe('/cron', () => {
   });
 
   it('fails on validation of empty code', async () => {
-    const res = await api.authAdmin('post', '/subscriber/test/validate', {
+    const res = await api.authAdmin('post', '/subscriber/validate', {
       id: 'unique-id',
-      products: ['*'],
+      objects: ['*'],
       events: ['some-event'],
       code: '',
     });
@@ -35,9 +35,9 @@ describe('/cron', () => {
   });
 
   it('fails on validation if id exists', async () => {
-    const res = await api.authAdmin('post', '/subscriber/test/validate', {
-      id: 'unique-id',
-      products: ['*'],
+    const res = await api.authAdmin('post', '/subscriber/validate', {
+      id: 'test',
+      objects: ['*'],
       events: ['some-event'],
       code: '1234',
     });
@@ -46,9 +46,9 @@ describe('/cron', () => {
   });
 
   it('fails on validation of code when product not existing', async () => {
-    const res = await api.authAdmin('post', '/subscriber/test/validate', {
+    const res = await api.authAdmin('post', '/subscriber/validate', {
       id: 'unique-id',
-      products: ['10'],
+      objects: ['10'],
       events: ['some-event'],
       code: '(products) => products',
     });
@@ -57,9 +57,9 @@ describe('/cron', () => {
   });
 
   it('fails on validation of code not returning proper object', async () => {
-    const res = await api.authAdmin('post', '/subscriber/test/validate', {
+    const res = await api.authAdmin('post', '/subscriber/validate', {
       id: 'unique-id',
-      products: ['*'],
+      objects: ['*'],
       events: ['some-event'],
       code: '(products) => products',
     });
@@ -68,31 +68,25 @@ describe('/cron', () => {
   });
 
   it('succeeds on validation of correct code on all objects', async () => {
-    const res = await api.authAdmin('post', '/subscriber/test/validate', {
+    const res = await api.authAdmin('post', '/subscriber/validate', {
       id: 'unique-id-1',
-      products: ['*'],
+      objects: ['*'],
       events: ['some-event'],
-      code: '(products) => ({1: products[0].price_points[0]})',
+      code: '(products) => ({1: products[0].price_points[0].value})',
     });
 
     expect(res.data.validation.success).toBe(true);
   });
 
   it('succeeds on validation of correct code on particular object', async () => {
-    const res = await api.authAdmin('post', '/subscriber/test/validate', {
+    const res = await api.authAdmin('post', '/subscriber/validate', {
       id: 'unique-id-2',
-      products: ['1'],
+      objects: ['1'],
       events: ['some-event'],
-      code: '(products) => ({1: products[0].price_points[0]})',
+      code: '(products) => ({1: products[0].price_points[0].value+2})',
     });
 
     expect(res.data.validation.success).toBe(true);
-  });
-
-  it('properly triggers subscriber existing for admin', async () => {
-    const res = await api.authAdmin('post', '/subscriber/test/trigger', {});
-
-    expect(res.data.success).toBe(true);
   });
 
   it('fails to trigger non existing subscriber', async () => {
@@ -102,14 +96,14 @@ describe('/cron', () => {
   });
 
   it('successfully creates subscriber for admin', async () => {
-    const res = await api.authAdmin('post', '/subscriber/test/validate', {
+    const res = await api.authAdmin('post', '/subscriber', {
       id: 'unique-id-3',
-      products: ['*'],
+      objects: ['*'],
       events: ['some-event'],
-      code: '(products) => ({1: products[0].price_points[0]})',
+      code: '(products) => ({1: products[0].price_points[0].value+2})',
     });
 
-    expect(res.data.success).toBe(true);
+    expect(res.data.subscriber).toBeDefined();
   });
 
   it('successfully deletes subscriber for admin', async () => {
@@ -119,21 +113,38 @@ describe('/cron', () => {
   });
 
   it('successfully updates subscriber for admin', async () => {
-    const res = await api.authAdmin('post', '/subscriber/unique-id-2', {
-      code: '(products) => ({1: products[0].price_points[0]})',
+    const code = '(products) => ({1: products[0].price_points[0].value+3})';
+    const res = await api.authAdmin('post', '/subscriber/test', {
+      code,
     });
 
+    expect(res.data.subscriber.code).toBe(code);
+  });
+
+  it('properly triggers existing subscriber for admin', async () => {
+    const res = await api.authAdmin('post', '/subscriber/test/trigger', {});
     expect(res.data.success).toBe(true);
   });
 
-
   it('fails all calls for unauthorised an default user', async () => {
     api.expectError(async () => await api.authDefault('get', '/subscriber'));
-    api.expectError(async () => await api.authDefault('get', '/subscriber/test'));
-    api.expectError(async () => await api.authDefault('post', '/subscriber/test/validate', {}));
-    api.expectError(async () => await api.authDefault('post', '/subscriber/test/trigger', {}));
-    api.expectError(async () => await api.authDefault('post', '/subscriber/test/validate', {}));
-    api.expectError(async () => await api.authDefault('delete', '/subscriber/test'));
-    api.expectError(async () => await api.authDefault('post', '/subscriber/test', {}));
+    api.expectError(
+      async () => await api.authDefault('get', '/subscriber/test')
+    );
+    api.expectError(
+      async () => await api.authDefault('post', '/subscriber/test/validate', {})
+    );
+    api.expectError(
+      async () => await api.authDefault('post', '/subscriber/test/trigger', {})
+    );
+    api.expectError(
+      async () => await api.authDefault('post', '/subscriber/test/validate', {})
+    );
+    api.expectError(
+      async () => await api.authDefault('delete', '/subscriber/test')
+    );
+    api.expectError(
+      async () => await api.authDefault('post', '/subscriber/test', {})
+    );
   });
 });

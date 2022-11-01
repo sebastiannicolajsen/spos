@@ -90,11 +90,13 @@ class SubscriberService extends BaseService {
           return { success: false, message: `${oid} does not exist` };
       }
 
+      let step = 'compile';
+
       try {
         const module = importFromStringSync('export default ' + code).default;
         if (typeof module !== 'function')
           return { success: false, message: 'Code is not a function' };
-
+        step = 'execute';
         const product = new Product();
         product.id = 1;
         product.name = 'test';
@@ -103,7 +105,6 @@ class SubscriberService extends BaseService {
         product.price_points[0].timestamp = new Date();
         product.transactions = [new Transaction()];
         const result = await module([product]);
-        console.log(result);
         const obj = result[1];
         if (isNaN(obj))
           return {
@@ -113,7 +114,7 @@ class SubscriberService extends BaseService {
       } catch (e) {
         return {
           success: false,
-          message: 'Code failed to compile, accept, or return a valid number',
+          message: `Code failed to ${step}`,
         };
       }
 
@@ -224,22 +225,21 @@ class SubscriberService extends BaseService {
       const subscriber = await this.find(id);
       if (!subscriber) return;
 
-      const { events, objects, code } = toUpdate;
+      const events = toUpdate.events || subscriber.events;
+      const objects = toUpdate.objects || subscriber.objects;
+      const code = toUpdate.code || subscriber.code;
 
       const validation = await this.validate(
-        `id${Math.random()}`, // hack to validate when subscriber is being updated
-        objects ? objects : subscriber.objects,
-        code ? code : subscriber.code
+        `id-${Math.random()}`, // hack to validate when subscriber is being updated
+        objects,
+        code
       );
-      if (!validation.success) return validation;
       
+
+      if (!validation.success) return validation;
+
       await this.delete(id);
-      return await this.create(
-        id,
-        events ? events : subscriber.events,
-        objects ? objects : subscriber.objects,
-        code ? code : subscriber.code
-      )
+      return await this.create(id, events, objects, code);
     });
   }
 

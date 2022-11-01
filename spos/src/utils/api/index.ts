@@ -86,7 +86,7 @@ class Api {
         Authorization: `Bearer ${token}`,
       },
       data,
-    }).then(res => result = res).catch(e => console.error(e));
+    }).then(res => result = res).catch(e => console.error(e.response.data.errors));
     return result;
   }
 }

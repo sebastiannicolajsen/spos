@@ -37,6 +37,7 @@ export default (): Server => {
   router.use('/seller', require('./routes/seller').default);
 
   router.use('/last_execution', require('./routes/subscriber/last-execution').default);
+  router.use('/events', require('./routes/events').default);
 
   // setup event logging dashboard:
   if(process.env.NODE_ENV !== 'test') log();
