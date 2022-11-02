@@ -1,17 +1,16 @@
-import React, { useState } from "react";
-import logo from "./logo.svg";
-import "./App.css";
 import api from "./spos-client";
 
 function App() {
   const products = api.products.useProducts();
-  
 
   return (
-    <div className="App">
+    <div >
       {products.map((product) => (
         <>
-          {product.id} | {product.name} | {product.price_points.values}kr <br/>
+          <span className="text-3xl font-bold underline">
+            {product.id} | {product.name} | {product.price_points[0].value}kr{" "}
+            <br />
+          </span>
         </>
       ))}
     </div>
