@@ -58,7 +58,7 @@ const updateState = (data: AuthData) => {
   saveToStorage();
 };
 
-const buildRequest = (path: string, body: {}) => {
+const buildRequest = (path: string, method: string, body: {}) => {
   let req = {};
   if (state_.jwt) {
     req = {
@@ -67,13 +67,13 @@ const buildRequest = (path: string, body: {}) => {
       },
     };
   }
-  req = { url: path, ...req, data: body };
+  req = {method, url: path, ...req, data: body };
   return req;
 };
 
 const execReq = async (method: string, path: string, body: {}) => {
   try {
-    const req = buildRequest(path, { method, ...body });
+    const req = buildRequest(path, method, body);
     const res = await client_.request(req);
     return res.data;
   } catch (e) {
@@ -111,6 +111,9 @@ const api = {
     role: (): SellerRole => {
       return state_.seller.role;
     },
+    loggedIn: (): boolean => {
+      return state_.jwt !== null;
+    }
   },
   auth: {
     login: async (username: string, password: string): Promise<Seller> => {
