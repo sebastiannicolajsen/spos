@@ -1,10 +1,9 @@
+import PriceGraph from "../../components/PriceGraph";
 
 function DashboardPage() {
 
     return (
-      <div >
-        dashboard page
-      </div>
+      <PriceGraph label={false}/>
     );
   }
   

@@ -1,11 +1,15 @@
 import axios, { AxiosInstance } from "axios";
 import axiosRetry from "axios-retry";
 import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import {
   AuthData,
   CronJobData,
   Interval,
+  Item,
+  ItemExpanded,
   ItemShallow,
+  PricePoint,
   Product,
   Seller,
   SellerRole,
@@ -67,17 +71,21 @@ const buildRequest = (path: string, method: string, body: {}) => {
       },
     };
   }
-  req = {method, url: path, ...req, data: body };
+  req = { method, url: path, ...req, data: body };
   return req;
 };
 
-const execReq = async (method: string, path: string, body: {}) => {
+const execReq = async (method: string, path: string, body: {}, silent: boolean = false) => {
   try {
+    if(!silent) toast.loading("executing...");
     const req = buildRequest(path, method, body);
     const res = await client_.request(req);
+    if(!silent) toast.dismiss();
+    if(!silent) toast.success("success");
     return res.data;
   } catch (e) {
-    console.log(`A request went wrong '${method}' '${path}'`, e);
+    if(!silent) toast.dismiss()
+    toast.error("something went wrong...");
   }
   return null;
 };
@@ -93,11 +101,11 @@ const useProducts = () => {
   useEffect(() => {
     const interval = setInterval(async () => {
       const newest = await api.lastExecution();
-      console.log("fetched newest", newest);
       if (newest && newest > last.current) {
         last.current = newest;
         console.log("updating pricing");
         setProducts(await api.products.list());
+        toast.success("Pricing updated");
       }
     }, RETRY_TIMEOUT);
     return () => clearInterval(interval);
@@ -106,6 +114,7 @@ const useProducts = () => {
   return products;
 };
 
+
 const api = {
   user: {
     role: (): SellerRole => {
@@ -113,7 +122,7 @@ const api = {
     },
     loggedIn: (): boolean => {
       return state_.jwt !== null;
-    }
+    },
   },
   auth: {
     login: async (username: string, password: string): Promise<Seller> => {
@@ -129,11 +138,23 @@ const api = {
   products: {
     useProducts,
     list: async (): Promise<Product[]> => {
-      const res = await execReq("GET", "/product", {});
+      const res = await execReq("GET", "/product", {}, true);
+      res.products.forEach((p: Product) => {
+        // map timestamps of prices to dates and sort accordingly (newest first)
+        p.price_points = p.price_points
+          .map((pp: PricePoint) => ({
+            ...pp,
+            timestamp: (pp.timestamp = new Date(pp.timestamp)),
+          }))
+          .sort(
+            (a: PricePoint, b: PricePoint) =>
+              b.timestamp.getTime() - a.timestamp.getTime()
+          );
+      });
       return res?.products;
     },
     find: async (id: number): Promise<Product> => {
-      const res = await execReq("GET", `/product/${id}`, {});
+      const res = await execReq("GET", `/product/${id}`, {}, true);
       return res?.product;
     },
     create: async (
@@ -162,8 +183,7 @@ const api = {
   },
   price_points: {
     create: async (productId: number, value: number): Promise<Product> => {
-      const res = await execReq("POST", `/price_point`, {
-        product_id: productId,
+      const res = await execReq("POST", `/price_point/${productId}`, {
         value,
       });
       return res?.product;
@@ -179,36 +199,37 @@ const api = {
   },
   transactions: {
     list: async (): Promise<Transaction[]> => {
-      const res = await execReq("GET", "/transaction", {});
+      const res = await execReq("GET", "/transaction", {}, true);
       return res.transactions;
     },
     find: async (id: number): Promise<Transaction> => {
-      const res = await execReq("GET", `/transaction/${id}`, {});
+      const res = await execReq("GET", `/transaction/${id}`, {}, true);
       return res?.transaction;
     },
     delete: async (id: number): Promise<Transaction> => {
       const res = await execReq("DELETE", `/transaction/${id}`, {});
       return res?.success ?? false;
     },
-    create: async (items: ItemShallow): Promise<Transaction> => {
-      const res = await execReq("POST", "/transaction", { items });
+    create: async (items: ItemExpanded[]): Promise<Transaction> => {
+      const sitems : ItemShallow[] = items.map(i => ({product_id: i.product.id, quantity: i.quantity, price_point_id: i.price_point.id}))
+      const res = await execReq("POST", "/transaction", { items: sitems });
       return res?.transaction;
     },
   },
   subscriber: {
     list: async (): Promise<Subscriber[]> => {
-      const res = await execReq("GET", "/subscriber", {});
+      const res = await execReq("GET", "/subscriber", {}, true);
       return res?.subscribers;
     },
     find: async (id: number): Promise<Subscriber> => {
-      const res = await execReq("GET", `/subscriber/${id}`, {});
+      const res = await execReq("GET", `/subscriber/${id}`, {}, true);
       return res?.subscriber;
     },
     delete: async (id: number): Promise<boolean> => {
       const res = await execReq("DELETE", `/subscriber/${id}`, {});
       return res?.success;
     },
-    trigger: async (id: string) : Promise<boolean> => {
+    trigger: async (id: string): Promise<boolean> => {
       const res = await execReq("POST", `/subscriber/${id}/trigger`, {});
       return res?.success;
     },
@@ -255,16 +276,16 @@ const api = {
     },
   },
   lastExecution: async (): Promise<Date> => {
-    const res = await execReq("GET", "/last_execution", {});
-    return res?.last_execution;
+    const res = await execReq("GET", "/last_execution", {}, true);
+    return new Date(res?.last_execution);
   },
   cron: {
     list: async (): Promise<CronJobData[]> => {
-      const res = await execReq("GET", "/cron", {});
+      const res = await execReq("GET", "/cron", {}, true);
       return res?.jobs;
     },
     find: async (id: string): Promise<CronJobData> => {
-      const res = await execReq("GET", `/cron/${id}`, {});
+      const res = await execReq("GET", `/cron/${id}`, {}, true);
       return res?.job;
     },
     delete: async (id: string): Promise<boolean> => {
@@ -295,11 +316,11 @@ const api = {
     },
     seller: {
       list: async (): Promise<Seller[]> => {
-        const res = await execReq("GET", "/seller", {});
+        const res = await execReq("GET", "/seller", {}, true);
         return res?.sellers;
       },
       find: async (id: number): Promise<Seller> => {
-        const res = await execReq("GET", `/seller/${id}`, {});
+        const res = await execReq("GET", `/seller/${id}`, {}, true);
         return res?.seller;
       },
       delete: async (id: number): Promise<boolean> => {

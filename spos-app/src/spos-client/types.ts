@@ -51,8 +51,8 @@ export type Item = ItemExpanded | ItemShallow;
 export type Transaction = {
   id: number;
   timestamp: Date;
-  seller: Seller[];
-  items: Item[];
+  seller: Seller;
+  items: ItemExpanded[];
 };
 
 export enum SellerRole {

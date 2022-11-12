@@ -37,7 +37,7 @@ router.post(
         .json({ errors: [{ msg: 'Something went wrong' }] });
 
     await subscriberService.updateLastExecution();
-    const result = await productService.find(req.params.id, ['pricePoints']);
+    const result = await productService.find(req.params.id, ['price_points']);
     res.status(200).json({ product: result });
   }
 );
