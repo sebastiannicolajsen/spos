@@ -12,9 +12,9 @@ function productToLine(product: Product, label: boolean) {
 
   return (
     <VictoryLine
-    animate={{
-      duration: 600,
-    }}
+      animate={{
+        duration: 600,
+      }}
       interpolation="linear"
       labels={({ datum }) => {
         return label ? datum.y : "";
@@ -22,7 +22,7 @@ function productToLine(product: Product, label: boolean) {
       style={{
         data: {
           stroke: `#${map[product.id]}`,
-          strokeWidth: 2,
+          strokeWidth: 3,
         },
       }}
       data={product.price_points.map((pp: PricePoint) => {
@@ -36,10 +36,7 @@ function PriceGraph(props: { label: boolean }) {
   const products = api.products.useProducts();
   return (
     <div>
-      <VictoryChart
-        width={900}
-        theme={VictoryTheme.material}
-      >
+      <VictoryChart width={900} theme={VictoryTheme.material}>
         <VictoryAxis dependentAxis />
         <VictoryAxis
           tickFormat={(t) =>

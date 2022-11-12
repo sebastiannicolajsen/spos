@@ -7,8 +7,8 @@ function getRelation(p1: PricePoint, p2: PricePoint) {
   let diff = p1.value - p2.value;
   let content = <span className="text-slate-600">0%</span>;
   if (diff !== 0) {
-    let disp = diff / p2.value;
-    disp = Math.abs(Math.round(disp * 100) / 100);
+    let disp =   diff / p2.value * 100; 
+    disp = Math.abs(Math.round(disp * 100) / 100) ;
     content = (
       <span
         className={diff > 0 ? "text-green-600" : "text-red-600"}

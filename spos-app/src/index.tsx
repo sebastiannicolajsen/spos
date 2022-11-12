@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Footer from "./components/Footer";
 import Header from "./components/Header";
 import "./index.css";
 import AdminPage from "./pages/admin/AdminPage";
@@ -35,6 +36,7 @@ root.render(
             <Route path="*" element={<MobilePage />} />
           </Routes>
         </div>
+        <Footer/>
       </BrowserRouter>
     </div>
   </React.StrictMode>
