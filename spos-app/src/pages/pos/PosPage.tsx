@@ -1,13 +1,8 @@
 import { ReactElement, useState } from "react";
 import api from "../../spos-client";
-import {
-  ItemExpanded,
-  PricePoint,
-  Product,
-  SellerRole,
-} from "../../spos-client/types";
+import { ItemExpanded, Product, SellerRole } from "../../spos-client/types";
 
-import {btn, input} from "../../components/styles";
+import { btn, input } from "../../components/styles";
 
 import * as _ from "lodash";
 import { FaEject, FaMinus, FaPlus, FaTrash, FaUpload } from "react-icons/fa";
@@ -140,6 +135,9 @@ function PosPage() {
     let minimumValue: number;
     let value: number;
 
+    const enter = (f: any) => (e: any) =>
+      e.key === "Enter" ? f(e.target.value) : null;
+
     const update = (obj: any) =>
       api.products
         .update(product.id, obj)
@@ -151,6 +149,7 @@ function PosPage() {
           <input
             className={input}
             onChange={(e) => (name = e.target.value)}
+            onKeyDown={enter(() => update({ name }))}
             defaultValue={product.name}
           />
           <button className={btn} onClick={() => update({ name })}>
@@ -162,6 +161,7 @@ function PosPage() {
           <input
             className={input}
             onChange={(e) => (minimumValue = parseInt(e.target.value))}
+            onKeyDown={enter(() => update({ minimumValue }))}
             defaultValue={product.minimum_value}
           />
           <button className={btn} onClick={() => update({ minimumValue })}>
@@ -173,6 +173,11 @@ function PosPage() {
           <input
             className={input}
             onChange={(e) => (value = parseInt(e.target.value))}
+            onKeyDown={enter(() =>
+              api.price_points
+                .create(product.id, value)
+                .then(() => api.products.invalidate())
+            )}
             defaultValue={product.price_points[0].value}
           />
           <button
@@ -285,7 +290,7 @@ function PosPage() {
 
   return (
     <div>
-      <div >
+      <div>
         {user === SellerRole.ADMIN &&
           (editing ? (
             <div className="grid grid-cols-2 pb-5 w-2/5">
