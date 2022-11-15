@@ -2,7 +2,7 @@ import { body, param, validationResult } from 'express-validator';
 import * as express from 'express';
 import Container from 'typedi';
 import ProductService from '../../../services/ProductService';
-import { jwtAuth } from '../../middleware';
+import { adminAuth, jwtAuth } from '../../middleware';
 import PricePointService from '../../../services/PricePointService';
 import SubscriberService from '../../../services/SubscriberService';
 
@@ -12,7 +12,7 @@ router.post(
   '/:id',
   param('id').isInt(),
   body('value').isNumeric(),
-  jwtAuth,
+  adminAuth,
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -42,25 +42,19 @@ router.post(
   }
 );
 
-router.post('/:id/reset', param('id').isInt(), jwtAuth, async (req, res) => {
+router.post('/reset', adminAuth, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const productService = Container.get(ProductService);
   const pricePointService = Container.get(PricePointService);
   const subscriberService = Container.get(SubscriberService);
 
-  const product = await productService.find(req.params.id);
-  if (!product)
-    return res.status(400).json({ errors: [{ msg: 'Product not found' }] });
-
-  await pricePointService.reset(product.id);
+  await pricePointService.reset();
 
   await subscriberService.updateLastExecution();
-  const result = await productService.find(req.params.id, ['price_points']);
-  return res.status(200).json({ product: result });
+  return res.status(200).json({ success: true });
 });
 
 export default router;

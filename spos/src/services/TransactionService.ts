@@ -34,6 +34,7 @@ class TransactionService extends BaseService {
 
   async create(seller_id: number, items: ShallowItem[]): Promise<Transaction> {
     return await this.error(async () => {
+      console.log(items)
       for (const item of items) {
         const product = await this.ProductService.find(item.product_id);
         if (!product) return;
@@ -45,7 +46,6 @@ class TransactionService extends BaseService {
 
       const transaction = new Transaction();
       transaction.seller = { id: seller_id } as Seller;
-      console.log(transaction.seller);
       transaction.products_ = items.map(
         (item) => ({ id: item.product_id } as Product)
       );
@@ -56,19 +56,20 @@ class TransactionService extends BaseService {
         items.map((item) => item.quantity)
       );
 
-      const result = await this.transactionRepository.create(transaction);
+      const result = await this.transactionRepository.create(transaction);  
       if (!result) return;
       await this.transactionRepository.save(result);
 
       await this.eventBusService.emit(TransactionServiceEvents.CREATE, result);
-      return await this.find(transaction.id);
+      return await this.find(result.id);
     });
   }
 
   private unwrap(transaction: Transaction) {
     const { products_, price_points_, quantity_ } = transaction;
+    console.log(transaction)
     const items = JSON.parse(quantity_).map((quantity: number, i: number) => ({
-      product: products_[i],
+      product: products_[i] ,
       price_point: price_points_[i],
       quantity,
     })) as Item[];
@@ -77,6 +78,8 @@ class TransactionService extends BaseService {
       (sum, item) => sum + item.price_point.value * item.quantity,
       0
     );
+
+    console.log(total)
 
     return {
       id: transaction.id,
@@ -108,6 +111,13 @@ class TransactionService extends BaseService {
       const transaction = await this.find(id);
       if (!transaction) return;
       await this.transactionRepository.delete(id);
+      return true;
+    });
+  }
+
+  async deleteAll(): Promise<boolean> {
+    return await this.error(async () => {
+      await this.transactionRepository.clear();
       return true;
     });
   }

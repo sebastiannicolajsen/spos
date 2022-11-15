@@ -5,13 +5,17 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import "./index.css";
-import AdminPage from "./pages/admin/AdminPage";
+import CronPage from "./pages/admin/CronPage";
+import SubscriberPage from "./pages/admin/SubscriberPage";
+import UserPage from "./pages/admin/UserPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import LoginPage from "./pages/login/LoginPage";
 import MobilePage from "./pages/mobile/MobilePage";
 import PosPage from "./pages/pos/PosPage";
 import { TransactionPage } from "./pages/transactions/TransactionPage";
 import reportWebVitals from "./reportWebVitals";
+import api from "./spos-client";
+import { SellerRole } from "./spos-client/types";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -25,18 +29,26 @@ root.render(
       <BrowserRouter>
         {"/login" !== window.location.pathname && <Header />}
         <Toaster />
-        <div className="container mx-auto bg-white p-10  w-2/3">
+        <div className="mt-10"/>
+        <div className="container mx-auto bg-white mt-20 w-2/3 p-10">
           <Routes>
             <Route path="/" element={<MobilePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/pos" element={<PosPage />} />
-            <Route path="/admin" element={<AdminPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/transactions" element={<TransactionPage />} />
+            {api.user.role() !== SellerRole.UNKNOWN && (
+              <>
+                <Route path="/transactions" element={<TransactionPage />} />
+                <Route path="/pos" element={<PosPage />} />
+                <Route path="/users" element={<UserPage />} />
+                <Route path="/subscribers" element={<SubscriberPage />} />
+                <Route path="/cron" element={<CronPage />} />
+              </>
+            )}
+
             <Route path="*" element={<MobilePage />} />
           </Routes>
         </div>
-        <Footer/>
+        <Footer />
       </BrowserRouter>
     </div>
   </React.StrictMode>

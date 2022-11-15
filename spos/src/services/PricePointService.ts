@@ -8,7 +8,7 @@ import EventBusService from './EventBusService';
 import ProductService from './ProductService';
 import { PricePoint } from '../models/PricePoint';
 import BaseService from './BaseService';
-import SubscriberService from './SubscriberService';
+import TransactionService from './TransactionService';
 
 export enum PricePointServiceEvents {
   CREATED = 'pricepoint.created',
@@ -25,6 +25,8 @@ class PricePointService extends BaseService {
     private readonly productService: ProductService,
     @Inject(PricePointRepositoryId)
     private readonly pricePointRepository: typeof PricePointRepository,
+    @Inject()
+    private readonly transactionService: TransactionService
   ) {
     super(eventBusService, PricePointServiceEvents.FAIL);
   }
@@ -45,20 +47,18 @@ class PricePointService extends BaseService {
     });
   }
 
-  async reset(product_id): Promise<boolean> {
+  async reset(): Promise<boolean> {
     return await this.error(async () => {
-      const pricePoints = await this.pricePointRepository.find({
-        where: { product: { id: product_id } },
-        relations: ['product'],
-      });
-      if (!pricePoints || pricePoints.length === 0) return;
-      const tmp_price = pricePoints[0].product.initial_value;
-      await this.pricePointRepository.remove(pricePoints);
-      await this.create(product_id, tmp_price);
-      await this.eventBusService.emit(
-        PricePointServiceEvents.RESET,
-        product_id
-      );
+      for (const product of await this.productService.get()) {
+        for (const pp of product.price_points) {
+          await this.pricePointRepository.delete(pp.id);
+        }
+        await this.create(product.id, product.initial_value);
+      }
+
+      await this.transactionService.deleteAll();
+
+      await this.eventBusService.emit(PricePointServiceEvents.RESET, {});
 
       return true;
     });

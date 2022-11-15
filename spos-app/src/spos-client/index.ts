@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import axiosRetry from "axios-retry";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
   AuthData,
@@ -22,6 +22,7 @@ const RETRY_TIMEOUT = 5000;
 type State = {
   seller: Seller;
   jwt: string | null;
+  refresh: React.MutableRefObject<Date | null> | null;
 };
 
 const JWT_TOKEN = "spos-jwt";
@@ -32,6 +33,7 @@ const state_: State = {
     role: SellerRole.UNKNOWN,
   } as Seller,
   jwt: null,
+  refresh: null,
 };
 
 const client_: AxiosInstance = axios.create({
@@ -75,16 +77,21 @@ const buildRequest = (path: string, method: string, body: {}) => {
   return req;
 };
 
-const execReq = async (method: string, path: string, body: {}, silent: boolean = false) => {
+const execReq = async (
+  method: string,
+  path: string,
+  body: {},
+  silent: boolean = false
+) => {
   try {
-    if(!silent) toast.loading("executing...");
+    if (!silent) toast.loading("executing...");
     const req = buildRequest(path, method, body);
     const res = await client_.request(req);
-    if(!silent) toast.dismiss();
-    if(!silent) toast.success("success");
+    if (!silent) toast.dismiss();
+    if (!silent) toast.success("success");
     return res.data;
   } catch (e) {
-    if(!silent) toast.dismiss()
+    if (!silent) toast.dismiss();
     toast.error("something went wrong...");
   }
   return null;
@@ -97,12 +104,15 @@ const useProducts = () => {
     initLoad.current = false;
     api.products.list().then((data) => setProducts(data));
   }
-  const last = useRef(new Date(0));
+  state_.refresh = useRef(new Date(0));
   useEffect(() => {
     const interval = setInterval(async () => {
       const newest = await api.lastExecution();
-      if (newest && newest > last.current) {
-        last.current = newest;
+      if (
+        !state_.refresh!.current ||
+        (newest && newest > state_.refresh!.current)
+      ) {
+        state_.refresh!.current = newest;
         console.log("updating pricing");
         setProducts(await api.products.list());
         toast.success("Pricing updated");
@@ -113,7 +123,6 @@ const useProducts = () => {
 
   return products;
 };
-
 
 const api = {
   user: {
@@ -130,6 +139,13 @@ const api = {
       updateState(res);
       return res.user;
     },
+    logout: async () : Promise<void> => {
+      localStorage.removeItem(JWT_TOKEN);
+      localStorage.removeItem(SELLER_TOKEN);
+      state_.jwt = null;
+      state_.seller = { role: SellerRole.UNKNOWN } as Seller;
+      window.location.href = "/"
+    },
     whoami: async (): Promise<Seller> => {
       const res = await execReq("GET", "/auth/whoami", {});
       return res.user;
@@ -137,6 +153,9 @@ const api = {
   },
   products: {
     useProducts,
+    invalidate: () => {
+      if (state_.refresh?.current) state_.refresh.current = null;
+    },
     list: async (): Promise<Product[]> => {
       const res = await execReq("GET", "/product", {}, true);
       res.products.forEach((p: Product) => {
@@ -173,7 +192,11 @@ const api = {
       id: number,
       toUpdate = { name: null, initialValue: null, minimumValue: null }
     ): Promise<Product> => {
-      const res = await execReq("PUT", `/product/${id}`, toUpdate);
+      const res = await execReq("PUT", `/product/${id}`, {
+        name: toUpdate.name,
+        initial_value: toUpdate.initialValue,
+        minimum_value: toUpdate.minimumValue,
+      });
       return res?.product;
     },
     delete: async (id: number): Promise<Product> => {
@@ -188,13 +211,9 @@ const api = {
       });
       return res?.product;
     },
-    reset: async (productId: number): Promise<Product> => {
-      const res = await execReq(
-        "DELETE",
-        `/price_point/${productId}/reset`,
-        {}
-      );
-      return res?.product;
+    reset: async (): Promise<Product> => {
+      const res = await execReq("POST", `/price_point/reset`, {});
+      return res?.success;
     },
   },
   transactions: {
@@ -211,7 +230,11 @@ const api = {
       return res?.success ?? false;
     },
     create: async (items: ItemExpanded[]): Promise<Transaction> => {
-      const sitems : ItemShallow[] = items.map(i => ({product_id: i.product.id, quantity: i.quantity, price_point_id: i.price_point.id}))
+      const sitems: ItemShallow[] = items.map((i) => ({
+        product_id: i.product.id,
+        quantity: i.quantity,
+        price_point_id: i.price_point.id,
+      }));
       const res = await execReq("POST", "/transaction", { items: sitems });
       return res?.transaction;
     },

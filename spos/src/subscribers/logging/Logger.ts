@@ -51,9 +51,9 @@ export default class Logger extends Subscriber {
   }
   handler(event: string, data: any): Promise<void> {
     if (event.includes('fail')) {
-      this.logger.log('error', event, data);
+      this.logger.log('error', JSON.stringify({ event, data}) );
     } else {
-      this.logger.log('info', event, data);
+      this.logger.log('info', JSON.stringify({ event, data}) );
     }
     return Promise.resolve();
   }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import api from "../../spos-client";
-import { Navigate } from "react-router-dom";
+import { btn, input } from "../../components/styles";
 
 function LoginPage() {
   const [username, setUsername] = useState("");
@@ -16,19 +16,35 @@ function LoginPage() {
   }
 
   return (
-    <div>
-      login page <br />
-      username:
-      <input value={username} onChange={(e) => setUsername(e.target.value)} />
+    <div className="m-auto w-1/4 content-center flex grid">
+      <div className="grid grid-cols-2 pb-5">
+        <div>username</div>
+        <div>
+          <input
+            className={input}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2">
+        <div>password</div>
+        <div>
+          {" "}
+          <input
+            className={input}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+          />
+        </div>
+      </div>
+
       <br />
-      password:
-      <input
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        type="password"
-      />
-      <br />
-      <button onClick={handleSubmit}>login</button>
+      <button className={btn} onClick={handleSubmit}>
+        login
+      </button>
     </div>
   );
 }

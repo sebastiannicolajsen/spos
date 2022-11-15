@@ -31,11 +31,11 @@ class EventBusService {
 
   public async emit(event: string, data: any): Promise<void> {
     console.log(`Redis: emitting ${event}`);
-    client.publish(this.channel, JSON.stringify([event, data]));
+    client.publish(this.channel, JSON.stringify({ event, data }));
   }
 
   public async unsubscribe(id: number): Promise<void> {
-    subscriber.removeListener("message", EventBusService.map[id]);
+    subscriber.removeListener('message', EventBusService.map[id]);
   }
 
   public async subscribe(
@@ -43,7 +43,9 @@ class EventBusService {
     callback: (event: string, data: any) => void
   ): Promise<number> {
     const cb = (_, message) => {
-      const [event_, data] = JSON.parse(message);
+      const msg = JSON.parse(message);
+      const event_ = msg.event;
+      const data = msg.data;
       if (event_ === event) callback(event_, data);
     };
     subscriber.on('message', cb);
