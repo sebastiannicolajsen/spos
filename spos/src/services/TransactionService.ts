@@ -34,7 +34,6 @@ class TransactionService extends BaseService {
 
   async create(seller_id: number, items: ShallowItem[]): Promise<Transaction> {
     return await this.error(async () => {
-      console.log(items)
       for (const item of items) {
         const product = await this.ProductService.find(item.product_id);
         if (!product) return;
@@ -67,7 +66,6 @@ class TransactionService extends BaseService {
 
   private unwrap(transaction: Transaction) {
     const { products_, price_points_, quantity_ } = transaction;
-    console.log(transaction)
     const items = JSON.parse(quantity_).map((quantity: number, i: number) => ({
       product: products_[i] ,
       price_point: price_points_[i],
@@ -78,8 +76,6 @@ class TransactionService extends BaseService {
       (sum, item) => sum + item.price_point.value * item.quantity,
       0
     );
-
-    console.log(total)
 
     return {
       id: transaction.id,
@@ -117,7 +113,8 @@ class TransactionService extends BaseService {
 
   async deleteAll(): Promise<boolean> {
     return await this.error(async () => {
-      await this.transactionRepository.clear();
+      const transactions = await this.transactionRepository.find();
+      await this.transactionRepository.remove(transactions);
       return true;
     });
   }

@@ -2,11 +2,27 @@ import { body, param, validationResult } from 'express-validator';
 import * as express from 'express';
 import Container from 'typedi';
 import ProductService from '../../../services/ProductService';
-import { adminAuth, jwtAuth } from '../../middleware';
+import { adminAuth } from '../../middleware';
 import PricePointService from '../../../services/PricePointService';
 import SubscriberService from '../../../services/SubscriberService';
 
 const router = express.Router();
+
+
+router.post('/reset', adminAuth, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const pricePointService = Container.get(PricePointService);
+  const subscriberService = Container.get(SubscriberService);
+
+  await pricePointService.reset();
+  await subscriberService.updateLastExecution();
+  
+  return res.status(200).json({ success: true });
+});
 
 router.post(
   '/:id',
@@ -42,19 +58,6 @@ router.post(
   }
 );
 
-router.post('/reset', adminAuth, async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
 
-  const pricePointService = Container.get(PricePointService);
-  const subscriberService = Container.get(SubscriberService);
-
-  await pricePointService.reset();
-
-  await subscriberService.updateLastExecution();
-  return res.status(200).json({ success: true });
-});
 
 export default router;

@@ -38,6 +38,17 @@ export function xMinute(interval: number): Interval {
   };
 }
 
+export function toInterval(str: string): Interval {
+  const [seconds, minutes, hours, days, months] = str.replace("*/","").split(" ");
+  return {
+    seconds,
+    minutes,
+    hours,
+    days,
+    months,
+  };
+}
+
 export type Interval = {
   seconds: string;
   minutes: string;
@@ -85,4 +96,5 @@ export type CronJobData = {
   event: string;
   interval: string;
   status: boolean;
+  next: string;
 };

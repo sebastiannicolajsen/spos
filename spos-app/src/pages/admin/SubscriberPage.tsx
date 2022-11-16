@@ -3,7 +3,7 @@ function SubscriberPage() {
 
     return (
       <div >
-        subscriber page
+         page
       </div>
     );
   }

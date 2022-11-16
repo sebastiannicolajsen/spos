@@ -56,6 +56,16 @@ function Header() {
           "Transformations"
         )}
         {compButton(user_role, SellerRole.UNKNOWN, "/login", "Login")}
+        {user_role === SellerRole.ADMIN && (
+           <>
+           <span
+             onClick={() => window.location.href = `${process.env.REACT_APP_API_URL}:${process.env.REACT_APP_LOGS_PORT}`}
+             className="pl-5 pr-5 text-slate-500 hover:text-slate-800 hover:cursor-pointer"
+           >
+             Logs
+           </span>
+         </>
+        )}
         {user_role !== SellerRole.UNKNOWN && (
           <>
             <span
@@ -66,6 +76,7 @@ function Header() {
             </span>
           </>
         )}
+
       </div>
   );
 }

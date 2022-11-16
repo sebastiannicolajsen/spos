@@ -58,12 +58,7 @@ function transactionsToBars(transactions: Transaction[], label: boolean) {
 }
 
 function TransactionGraph(props: { label: boolean }) {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-
-  if (transactions.length === 0)
-    api.transactions
-      .list()
-      .then((transactions) => setTransactions(transactions));
+  const transactions = api.transactions.useTransactions();
 
   return (
     <div>

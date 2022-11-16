@@ -12,7 +12,7 @@ import DashboardPage from "./pages/dashboard/DashboardPage";
 import LoginPage from "./pages/login/LoginPage";
 import MobilePage from "./pages/mobile/MobilePage";
 import PosPage from "./pages/pos/PosPage";
-import { TransactionPage } from "./pages/transactions/TransactionPage";
+import TransactionPage from "./pages/transactions/TransactionPage";
 import reportWebVitals from "./reportWebVitals";
 import api from "./spos-client";
 import { SellerRole } from "./spos-client/types";

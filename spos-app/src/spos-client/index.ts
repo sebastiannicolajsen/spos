@@ -6,7 +6,6 @@ import {
   AuthData,
   CronJobData,
   Interval,
-  Item,
   ItemExpanded,
   ItemShallow,
   PricePoint,
@@ -37,7 +36,7 @@ const state_: State = {
 };
 
 const client_: AxiosInstance = axios.create({
-  baseURL: `${process.env.REACT_APP_API_URL}/api`,
+  baseURL: `${process.env.REACT_APP_API_URL}:${process.env.REACT_APP_API_PORT}/api`,
 });
 
 axiosRetry(client_, { retries: 5 });
@@ -124,6 +123,31 @@ const useProducts = () => {
   return products;
 };
 
+const useTransactions = () => {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const initLoad = useRef(true);
+  if (initLoad.current) {
+    initLoad.current = false;
+    api.transactions.list().then((data) => setTransactions(data));
+  }
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const newest = await api.lastExecution();
+      if (
+        !state_.refresh!.current ||
+        (newest && newest > state_.refresh!.current)
+      ) {
+        state_.refresh!.current = newest;
+        console.log("updating transactions");
+        setTransactions(await api.transactions.list());
+      }
+    }, RETRY_TIMEOUT * 10);
+    return () => clearInterval(interval);
+  }, []);
+
+  return transactions;
+}
+
 const api = {
   user: {
     role: (): SellerRole => {
@@ -139,17 +163,23 @@ const api = {
       updateState(res);
       return res.user;
     },
-    logout: async () : Promise<void> => {
+    logout: async (): Promise<void> => {
       localStorage.removeItem(JWT_TOKEN);
       localStorage.removeItem(SELLER_TOKEN);
       state_.jwt = null;
       state_.seller = { role: SellerRole.UNKNOWN } as Seller;
-      window.location.href = "/"
+      window.location.href = "/";
     },
     whoami: async (): Promise<Seller> => {
       const res = await execReq("GET", "/auth/whoami", {});
       return res.user;
     },
+  },
+  events: {
+    list: async (): Promise<string[]> => {
+      const res = await execReq("GET", "/events", {}, true);
+      return res?.events;
+    }
   },
   products: {
     useProducts,
@@ -217,6 +247,7 @@ const api = {
     },
   },
   transactions: {
+    useTransactions,
     list: async (): Promise<Transaction[]> => {
       const res = await execReq("GET", "/transaction", {}, true);
       return res.transactions;
@@ -320,7 +351,7 @@ const api = {
       event: string,
       interval: Interval
     ): Promise<CronJobData> => {
-      const cronInterval = `${interval.seconds} ${interval.minutes} ${interval.hours} ${interval.days} ${interval.months} *`;
+      const cronInterval = `${interval.seconds} */${interval.minutes} ${interval.hours} ${interval.days} ${interval.months} *`;
 
       const res = await execReq("POST", "/cron", {
         id,
@@ -333,35 +364,35 @@ const api = {
       const res = await execReq("POST", `/cron/${id}/pause`, {});
       return res?.success ?? false;
     },
-    start: async (id: string): Promise<boolean> => {
-      const res = await execReq("POST", `/cron/${id}/start`, {});
+    restart: async (id: string): Promise<boolean> => {
+      const res = await execReq("POST", `/cron/${id}/restart`, {});
       return res?.success ?? false;
     },
-    seller: {
-      list: async (): Promise<Seller[]> => {
-        const res = await execReq("GET", "/seller", {}, true);
-        return res?.sellers;
-      },
-      find: async (id: number): Promise<Seller> => {
-        const res = await execReq("GET", `/seller/${id}`, {}, true);
-        return res?.seller;
-      },
-      delete: async (id: number): Promise<boolean> => {
-        const res = await execReq("DELETE", `/seller/${id}`, {});
-        return res?.succes;
-      },
-      create: async (
-        username: string,
-        password: string,
-        role: "ADMIN" | "DEFAULT"
-      ): Promise<Seller> => {
-        const res = await execReq("POST", "/seller", {
-          username,
-          password,
-          role,
-        });
-        return res?.seller;
-      },
+  },
+  seller: {
+    list: async (): Promise<Seller[]> => {
+      const res = await execReq("GET", "/seller", {}, true);
+      return res?.sellers;
+    },
+    find: async (id: number): Promise<Seller> => {
+      const res = await execReq("GET", `/seller/${id}`, {}, true);
+      return res?.seller;
+    },
+    delete: async (id: number): Promise<boolean> => {
+      const res = await execReq("DELETE", `/seller/${id}`, {});
+      return res?.succes;
+    },
+    create: async (
+      username: string,
+      password: string,
+      role: SellerRole.ADMIN | SellerRole.DEFAULT
+    ): Promise<Seller> => {
+      const res = await execReq("POST", "/seller", {
+        username,
+        password,
+        role,
+      });
+      return res?.seller;
     },
   },
 };

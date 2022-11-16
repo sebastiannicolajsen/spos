@@ -1,4 +1,4 @@
-import { ReactElement, useState } from "react";
+import { ReactElement, useEffect, useState } from "react";
 import api from "../../spos-client";
 import { ItemExpanded, Product, SellerRole } from "../../spos-client/types";
 
@@ -10,6 +10,15 @@ import { FaEject, FaMinus, FaPlus, FaTrash, FaUpload } from "react-icons/fa";
 function PosPage() {
   const products = api.products.useProducts();
   const user = api.user.role();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(false);
+  }, [products]);
+
+  const load = () => {
+    setLoading(true);
+  };
 
   const [usedProducts, setUsedProducts] = useState<Product[]>([]);
 
@@ -83,10 +92,9 @@ function PosPage() {
     let name: string;
     let minimumValue: number;
     let value: number;
-    return (
+    return cardWrapper(
       <>
-        <hr className="m-4" />
-        <div className="grid grid-cols-1 pb-1 w-1/2">
+        <div className="grid grid-cols-1 pb-1">
           <div className="grid grid-cols-2 pb-1">
             <div>name</div>
             <input
@@ -112,6 +120,7 @@ function PosPage() {
             <button
               className={`${btn} w-40`}
               onClick={() => {
+                load();
                 api.products
                   .create(name, value, minimumValue)
                   .then(() => api.products.invalidate());
@@ -138,10 +147,13 @@ function PosPage() {
     const enter = (f: any) => (e: any) =>
       e.key === "Enter" ? f(e.target.value) : null;
 
-    const update = (obj: any) =>
+    const update = (obj: any) => {
+      load();
       api.products
         .update(product.id, obj)
         .then(() => api.products.invalidate());
+    };
+
     return cardWrapper(
       <div>
         <div className="grid grid-cols-3 pb-1">
@@ -182,11 +194,12 @@ function PosPage() {
           />
           <button
             className={btn}
-            onClick={() =>
+            onClick={() => {
+              load();
               api.price_points
                 .create(product.id, value)
-                .then(() => api.products.invalidate())
-            }
+                .then(() => api.products.invalidate());
+            }}
           >
             <FaUpload />
           </button>
@@ -195,6 +208,7 @@ function PosPage() {
           <button
             className={btn}
             onClick={() => {
+              load();
               api.products.delete(product.id);
               api.products.invalidate();
             }}
@@ -261,9 +275,13 @@ function PosPage() {
             <>
               <hr className="m-4" />
               <div className="grid grid-cols-4 content-center">
-                <div>{i.product.name}</div>
+                <div >
+                  {i.product.name.length <= 9
+                    ? i.product.name
+                    : `${i.product.name.substring(0, 9)}...`}
+                </div>
                 <div>{i.quantity}</div>
-                {modifyQuantity(i.product)}
+                <div>{modifyQuantity(i.product)}</div>
                 <div>{i.price_point.value * i.quantity}</div>
               </div>
             </>
@@ -290,28 +308,42 @@ function PosPage() {
 
   return (
     <div>
+      {loading && (
+        <div className="opacity-50 fixed left-0 right-0 top-0 bottom-0 bg-slate-50">
+          {" "}
+          <div className="fixed top-1/2 left-1/2"> Loading...</div>
+        </div>
+      )}
       <div>
         {user === SellerRole.ADMIN &&
           (editing ? (
-            <div className="grid grid-cols-2 pb-5 w-2/5">
-              <div>
-                <button className={btn} onClick={edit}>
-                  Disable editing
+            <>
+              <div className="grid grid-cols-2 pb-5 w-2/5">
+                <div>
+                  <button className={btn} onClick={edit}>
+                    Disable editing
+                  </button>
+                </div>
+                <button
+                  className={btn}
+                  onClick={() => {
+                    load();
+                    api.price_points
+                      .reset()
+                      .then(() => api.products.invalidate());
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <FaEject /> <div className="ml-2">reset products</div>
+                  </div>
                 </button>
               </div>
-              <button
-                className={btn}
-                onClick={() => {
-                  api.price_points
-                    .reset()
-                    .then(() => api.products.invalidate());
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <FaEject /> <div className="ml-2">reset products</div>
-                </div>
-              </button>
-            </div>
+              <div className="">
+                <hr className="m-4" />
+                {editing && <CreateProductCard />}
+                <hr className="m-4" />
+              </div>
+            </>
           ) : (
             <div className="pb-5">
               <button className={btn} onClick={edit}>
@@ -326,16 +358,15 @@ function PosPage() {
             ? usedProducts.map(ProductCard)
             : products.map(editing ? EditProductCard : ProductCard)}
         </div>
-        {editing && <CreateProductCard />}
-        <div className="grid grid-cols-1 ">
+        <div className="grid grid-cols-1">
           {!editing && (
-            <>
+            <div className={selected.length <= 5 ? "fixed w-4/5" : ""}>
               {cardWrapper(
                 <>
                   <Order /> <OrderingComponent />
                 </>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
