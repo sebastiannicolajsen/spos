@@ -42,11 +42,12 @@ class EventBusService {
     event: string,
     callback: (event: string, data: any) => void
   ): Promise<number> {
+    const all = event === '*';
     const cb = (_, message) => {
       const msg = JSON.parse(message);
       const event_ = msg.event;
       const data = msg.data;
-      if (event_ === event) callback(event_, data);
+      if (all || event_ === event) callback(event_, data);
     };
     subscriber.on('message', cb);
     const id = EventBusService.nextId++;

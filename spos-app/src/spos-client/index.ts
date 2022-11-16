@@ -279,7 +279,7 @@ const api = {
       const res = await execReq("GET", `/subscriber/${id}`, {}, true);
       return res?.subscriber;
     },
-    delete: async (id: number): Promise<boolean> => {
+    delete: async (id: string): Promise<boolean> => {
       const res = await execReq("DELETE", `/subscriber/${id}`, {});
       return res?.success;
     },

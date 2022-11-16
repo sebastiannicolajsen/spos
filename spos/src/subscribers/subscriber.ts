@@ -9,9 +9,7 @@ export default abstract class Subscriber {
     this.eventBusService = Container.get(EventBusService);
     const events = this.events()
     if (events[0] === '*') {
-      for (const event of StaticEvents as string[]) {
-        this.eventBusService.subscribe(event, (e, d) => this.handler(e,d));
-      }
+        this.eventBusService.subscribe('*', (e, d) => this.handler(e,d));
     } else {
       for (const event of events) {
         this.eventBusService.subscribe(event, this.handler);

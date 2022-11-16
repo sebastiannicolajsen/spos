@@ -6,7 +6,12 @@ import {
   FaPause,
   FaPlay,
   FaPlus,
+  FaQuestion,
+  FaQuestionCircle,
   FaRegArrowAltCircleRight,
+  FaRegCheckCircle,
+  FaRegCheckSquare,
+  FaRegQuestionCircle,
   FaTrash,
 } from "react-icons/fa";
 import { btn, greenLabel, input, redLabel } from "../../components/styles";
@@ -113,6 +118,16 @@ export class CronPage extends React.Component<{}, { jobs: CronJobData[] }> {
       const [event, setEvent] = useState("");
       const [interval, setInterval] = useState("");
 
+      const [events, setEvents] = useState<string[]>([]);
+      const loadedEvents = useRef(false);
+
+      if (!loadedEvents.current) {
+        loadedEvents.current = true;
+        api.events.list().then((events) => {
+          setEvents(events);
+        });
+      }
+
       return (
         <div className="grid grid-cols-4 gap-6">
           <div>
@@ -124,8 +139,7 @@ export class CronPage extends React.Component<{}, { jobs: CronJobData[] }> {
               onChange={(e) => setId(e.target.value)}
             />
           </div>
-          <div>
-
+          <div className="grid grid-cols-2">
             <input
               className={input}
               type="text"
@@ -133,6 +147,15 @@ export class CronPage extends React.Component<{}, { jobs: CronJobData[] }> {
               value={event}
               onChange={(e) => setEvent(e.target.value)}
             />
+            {!events.includes(event) ? (
+              <div className="ml-2" style={{ display: "flex", alignItems: "center" }}>
+                <FaRegQuestionCircle className="text-slate-500"/>
+              </div>
+            ) : (
+                <div className="ml-2" style={{ display: "flex", alignItems: "center" }}>
+                <FaRegCheckCircle className="text-blue-500"/>
+              </div>
+            )}
           </div>
           <div>
             <input

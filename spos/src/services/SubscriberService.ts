@@ -61,13 +61,13 @@ class SubscriberService extends BaseService {
 
   async find(id: string): Promise<Subscriber> {
     return await this.error(async () => {
-      return this.subscriberRepository.findOne({ where: { id } });
+      return _.omit(this.subscriberRepository.findOne({ where: { id } }), ["objects_", "events_"]) ;
     });
   }
 
   async get(): Promise<Subscriber[]> {
     return await this.error(async () => {
-      return this.subscriberRepository.find();
+      return (await this.subscriberRepository.find()).map((s) => _.omit(s, ['events_', 'objects_']));
     });
   }
 
