@@ -10,8 +10,8 @@ if (process.env.NODE_ENV === 'test') {
   client = new FakeRedis();
   subscriber = new FakeRedis();
 } else {
-  client = new RealRedis(process.env.REDIS_HOST);
-  subscriber = new RealRedis(process.env.REDIS_HOST);
+  client = new RealRedis({ host: process.env.REDIS_HOST });
+  subscriber = new RealRedis({ host: process.env.REDIS_HOST});
 }
 
 @Service()

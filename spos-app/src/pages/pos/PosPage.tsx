@@ -292,7 +292,7 @@ function PosPage() {
           <div>Total</div>
           <div />
           <div />
-          <div>{total}</div>
+          <div>{Math.ceil(total)}</div>
         </div>
         <hr className="m-4" />
       </div>

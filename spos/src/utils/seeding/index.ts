@@ -1,10 +1,12 @@
 import { AppDataSource } from '../../repositories/data-source';
+import { cronJobs } from './cron/cron';
 import { products } from './products/products';
 import { sellers } from './sellers/sellers';
+import { subscribers } from './subscribers/subscribers';
 import { transactions } from './transactions/transactions';
 
 // import all seedings
-const seedings = [sellers, products, transactions];
+const seedings = [sellers, products, transactions, cronJobs, subscribers];
 
 console.log('Connecting to db ...');
 AppDataSource.initialize()

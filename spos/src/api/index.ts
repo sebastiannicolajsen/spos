@@ -3,7 +3,7 @@ import * as bodyParser from 'body-parser';
 import './middleware';
 import { Server } from 'http';
 import log from './routes/logging';
-import cors = require('cors');
+import * as cors from 'cors';
 
 const app = express();
 const router = express.Router();

@@ -23,9 +23,6 @@ function productToBar(
 
   return (
     <VictoryBar
-      animate={{
-        duration: 600,
-      }}
       style={{
         data: {
           fill: `#${map[data.product.id]}`,

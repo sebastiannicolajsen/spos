@@ -26,12 +26,14 @@ if (process.env.NODE_ENV === 'test') {
   if (!process.env.DATABASE_HOST) {
     dotenv.config();
   }
+
   config = {
     type: process.env.DATABASE_TYPE,
     port: process.env.DATABASE_PORT,
     username: process.env.DATABASE_USERNAME,
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE_NAME,
+    host: process.env.DATABASE_HOST,
   };
 }
 

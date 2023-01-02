@@ -26,7 +26,8 @@ export const StaticEvents = [
   ..._.values(PricePointServiceEvents),
   ..._.values(SubscriberServiceEvents),
   ..._.values(ProductServiceEvents),
-  ..._.values(TransactionServiceEvents)
+  ..._.values(TransactionServiceEvents),
+  ""
 ];
 
 

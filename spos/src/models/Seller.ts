@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, OneToMany } from "typeorm"
-import * as bcrypt from "bcrypt"
+import * as bcrypt from "bcryptjs"
 import { Transaction } from "./Transaction"
 
 export enum SellerRole {

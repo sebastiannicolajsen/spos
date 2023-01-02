@@ -14,6 +14,7 @@ import {
   SellerRole,
   Subscriber,
   Transaction,
+  ValidationEvent,
 } from "./types";
 
 const RETRY_TIMEOUT = 5000;
@@ -188,6 +189,7 @@ const api = {
     },
     list: async (): Promise<Product[]> => {
       const res = await execReq("GET", "/product", {}, true);
+      res.products.sort((a: Product, b: Product) => a.name.localeCompare(b.name));
       res.products.forEach((p: Product) => {
         // map timestamps of prices to dates and sort accordingly (newest first)
         p.price_points = p.price_points
@@ -307,7 +309,7 @@ const api = {
       objects: string[] | null = null,
       code: string | null = null
     ) => {
-      const res = await execReq("PUT", `/subscriber/${id}`, {
+      const res = await execReq("POST", `/subscriber/${id}`, {
         events,
         objects,
         code,
@@ -319,14 +321,14 @@ const api = {
       events: string[],
       objects: string[],
       code: string
-    ): Promise<boolean> => {
+    ): Promise<ValidationEvent> => {
       const res = await execReq("POST", "/subscriber/validate", {
         id,
         events,
         objects,
         code,
-      });
-      return res?.valid ?? false;
+      }, true);
+      return res?.validation;
     },
   },
   lastExecution: async (): Promise<Date> => {

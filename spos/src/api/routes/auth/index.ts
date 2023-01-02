@@ -1,6 +1,6 @@
 import { body, validationResult } from 'express-validator';
 import * as express from 'express';
-import passport = require('passport');
+import * as passport  from 'passport';
 import * as jwt from 'jsonwebtoken';
 
 const router = express.Router();

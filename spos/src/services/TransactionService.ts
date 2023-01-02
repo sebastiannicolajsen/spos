@@ -1,4 +1,4 @@
-import _ = require('lodash');
+import * as _ from 'lodash';
 import { Inject, Service } from 'typedi';
 import { PricePoint } from '../models/PricePoint';
 import { Product } from '../models/Product';
@@ -55,7 +55,7 @@ class TransactionService extends BaseService {
         items.map((item) => item.quantity)
       );
 
-      const result = await this.transactionRepository.create(transaction);  
+      const result = await this.transactionRepository.create(transaction);
       if (!result) return;
       await this.transactionRepository.save(result);
 
@@ -67,7 +67,7 @@ class TransactionService extends BaseService {
   private unwrap(transaction: Transaction) {
     const { products_, price_points_, quantity_ } = transaction;
     const items = JSON.parse(quantity_).map((quantity: number, i: number) => ({
-      product: products_[i] ,
+      product: products_[i],
       price_point: price_points_[i],
       quantity,
     })) as Item[];

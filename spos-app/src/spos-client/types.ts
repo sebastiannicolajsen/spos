@@ -98,3 +98,9 @@ export type CronJobData = {
   status: boolean;
   next: string;
 };
+
+
+export type ValidationEvent = {
+  success: boolean;
+  message: string;
+};

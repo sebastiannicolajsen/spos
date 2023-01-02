@@ -1,4 +1,4 @@
-import _ = require('lodash');
+import * as _  from 'lodash';
 import { Inject, Service } from 'typedi';
 import { Seller, SellerRole } from '../models/Seller';
 import {

@@ -1,7 +1,7 @@
 import { Inject, Service } from 'typedi';
 import EventBusService from './EventBusService';
 import SellerService from './SellerService';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import BaseService from './BaseService';
 
 export enum AuthServiceEvents {

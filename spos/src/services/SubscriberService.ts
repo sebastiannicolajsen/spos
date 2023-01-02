@@ -6,7 +6,6 @@ import {
 import * as _ from 'lodash';
 import EventBusService from './EventBusService';
 import ProductService from './ProductService';
-import { importFromStringSync } from 'module-from-string';
 import { Subscriber } from '../models/Subscriber';
 import { Product } from '../models/Product';
 import PricePointService from './PricePointService';
@@ -61,13 +60,18 @@ class SubscriberService extends BaseService {
 
   async find(id: string): Promise<Subscriber> {
     return await this.error(async () => {
-      return _.omit(this.subscriberRepository.findOne({ where: { id } }), ["objects_", "events_"]) ;
+      return _.omit(await this.subscriberRepository.findOne({ where: { id } }), [
+        'objects_',
+        'events_',
+      ]);
     });
   }
 
   async get(): Promise<Subscriber[]> {
     return await this.error(async () => {
-      return (await this.subscriberRepository.find()).map((s) => _.omit(s, ['events_', 'objects_']));
+      return (await this.subscriberRepository.find()).map((s) =>
+        _.omit(s, ['events_', 'objects_'])
+      );
     });
   }
 
@@ -81,7 +85,7 @@ class SubscriberService extends BaseService {
     code: string
   ): Promise<ValidationEvent> {
     return await this.error(async () => {
-      if (await this.find(id))
+      if ((await this.find(id))?.id)
         return { success: false, message: 'Subscriber already existing' };
       for (const oid of objects) {
         if (oid === '*') continue;
@@ -93,7 +97,8 @@ class SubscriberService extends BaseService {
       let step = 'compile';
 
       try {
-        const module = importFromStringSync('export default ' + code).default;
+        const module = Function(`return ${code};`)();
+        console.log(module)
         if (typeof module !== 'function')
           return { success: false, message: 'Code is not a function' };
         step = 'execute';
@@ -112,6 +117,9 @@ class SubscriberService extends BaseService {
             message: 'Code does not return price',
           };
       } catch (e) {
+        await this.eventBusService.emit(SubscriberServiceEvents.ERROR, {
+          id, objects, code, error: e
+        })
         return {
           success: false,
           message: `Code failed to ${step}`,
@@ -139,6 +147,11 @@ class SubscriberService extends BaseService {
             products.push(await this.productService.find(parseInt(object)));
           }
         }
+        for (const prod of products) {
+          prod.price_points.sort(
+            (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+          );
+        }
 
         let pricePoints: { [id: number]: number } = null;
         try {
@@ -162,7 +175,7 @@ class SubscriberService extends BaseService {
       };
 
       const genFun = await fun(
-        importFromStringSync('export default ' + subscriber.code).default
+        Function(`return ${subscriber.code};`)()
       );
 
       SubscriberService.wrappers[subscriber.id] = genFun;
@@ -234,7 +247,6 @@ class SubscriberService extends BaseService {
         objects,
         code
       );
-      
 
       if (!validation.success) return validation;
 
@@ -246,15 +258,13 @@ class SubscriberService extends BaseService {
   async delete(id: string): Promise<boolean> {
     return await this.error(async () => {
       const subscriber = await this.find(id);
-      if (!subscriber) return;
+      if (!subscriber?.id) return;
+      await this.subscriberRepository.delete(id);
 
-      const tmp = _.cloneDeep(subscriber);
-
-      await this.subscriberRepository.remove(subscriber);
       SubscriberService.wrappers[id] = null;
       await this.eventBusService.unsubscribe(SubscriberService.idMap[id]);
 
-      await this.eventBusService.emit(SubscriberServiceEvents.DELETE, tmp);
+      await this.eventBusService.emit(SubscriberServiceEvents.DELETE, id);
       return true;
     });
   }
