@@ -24,6 +24,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # docker
-postgres-data
-redis_data
+/postgres-data
+/redis_data
 
