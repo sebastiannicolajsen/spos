@@ -2,7 +2,7 @@ FROM node:16.11.0-buster
 
 WORKDIR /usr/src/spos
 
-COPY package*.json environment.d.ts tsconfig.json /usr/src/spos
+COPY package*.json environment.d.ts tsconfig.json /usr/src/spos/
 
 COPY ./src ./src
 
