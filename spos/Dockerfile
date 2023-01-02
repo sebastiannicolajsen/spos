@@ -1,4 +1,4 @@
-FROM node:16.11.0-buster
+FROM node:18.11.0-alpine
 
 WORKDIR /usr/src/spos
 
